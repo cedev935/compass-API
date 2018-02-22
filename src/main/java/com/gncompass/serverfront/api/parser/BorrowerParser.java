@@ -4,6 +4,7 @@ import com.gncompass.serverfront.api.executer.AbstractExecuter;
 import com.gncompass.serverfront.api.executer.BorrowerCreate;
 import com.gncompass.serverfront.api.executer.BorrowerInfo;
 import com.gncompass.serverfront.api.executer.BorrowerLogin;
+import com.gncompass.serverfront.api.executer.BorrowerLogout;
 import com.gncompass.serverfront.api.executer.BorrowerUpdate;
 import com.gncompass.serverfront.util.HttpHelper.RequestType;
 
@@ -67,7 +68,7 @@ public abstract class BorrowerParser {
       switch (pathChunks.remove(0)) {
         case PATH_LOGOUT:
           if (pathChunks.size() == 0 && type == RequestType.POST) {
-            // TODO! Implement
+            executer = new BorrowerLogout(level2Chunk);
           }
           break;
       }
