@@ -2,7 +2,9 @@ package com.gncompass.serverfront.api.parser;
 
 import com.gncompass.serverfront.api.executer.AbstractExecuter;
 import com.gncompass.serverfront.api.executer.BorrowerCreate;
+import com.gncompass.serverfront.api.executer.BorrowerInfo;
 import com.gncompass.serverfront.api.executer.BorrowerLogin;
+import com.gncompass.serverfront.api.executer.BorrowerUpdate;
 import com.gncompass.serverfront.util.HttpHelper.RequestType;
 
 import java.io.IOException;
@@ -47,9 +49,9 @@ public abstract class BorrowerParser {
         default:
           if (pathChunks.size() == 0) {
             if (type == RequestType.GET) {
-              // TODO! Implement
+              executer = new BorrowerInfo(level2Chunk);
             } else if (type == RequestType.PUT) {
-              // TODO! Implement
+              executer = new BorrowerUpdate(level2Chunk);
             }
           } else {
             nextLevel = true;
