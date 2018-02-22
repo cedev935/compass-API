@@ -12,6 +12,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Date;
+import java.util.UUID;
 
 public class UserSession extends AbstractObject {
   // Database name
@@ -26,8 +27,8 @@ public class UserSession extends AbstractObject {
   private static final String ACCESSED = "accessed";
 
   // Database parameters
-  public int mId = 0;
-  public int mUserId = 0;
+  public long mId = 0;
+  public long mUserId = 0;
   public byte[] mDeviceId = null;
   public byte[] mSessionKey = null;
   public Timestamp mCreated = null;
@@ -35,6 +36,13 @@ public class UserSession extends AbstractObject {
 
   // Internals
   public User mUser = null;
+
+  public UserSession() {
+  }
+
+  public UserSession(Cache sessionCache) {
+    mId = sessionCache.mSessionId;
+  }
 
   /*=============================================================
    * PRIVATE FUNCTIONS
@@ -114,8 +122,8 @@ public class UserSession extends AbstractObject {
    */
   @Override
   protected void updateFromFetch(ResultSet resultSet) throws SQLException {
-    mId = resultSet.getInt(getColumn(ID));
-    mUserId = resultSet.getInt(getColumn(USER_ID));
+    mId = resultSet.getLong(getColumn(ID));
+    mUserId = resultSet.getLong(getColumn(USER_ID));
     mDeviceId = resultSet.getBytes(getColumn(DEVICE_ID));
     mSessionKey = resultSet.getBytes(getColumn(SESSION_KEY));
     mCreated = resultSet.getTimestamp(getColumn(CREATED));
@@ -125,6 +133,17 @@ public class UserSession extends AbstractObject {
   /*=============================================================
    * PUBLIC FUNCTIONS
    *============================================================*/
+
+  /**
+   * Returns the user session cache object
+   * @return the cache object
+   */
+  public Cache getCache() {
+    if (mUser != null) {
+      return new Cache(mUser.getUserId(), mUser.getUserReference(), mId);
+    }
+    return null;
+  }
 
   /**
    * Fetches the user session information from the database
@@ -188,6 +207,35 @@ public class UserSession extends AbstractObject {
       conn.prepareStatement(updateSql).executeUpdate();
     } catch (SQLException e) {
       throw new RuntimeException("Unable to update the session accessed time with SQL", e);
+    }
+  }
+
+  /*=============================================================
+   * STATIC FUNCTIONS
+   *============================================================*/
+
+  public static void updateAccessed(Cache sessionCache) {
+    new UserSession(sessionCache).updateAccessed();
+  }
+
+  /*=============================================================
+   * INNER CLASSES
+   *============================================================*/
+
+  public static class Cache {
+    public long mId;
+    public UUID mReference;
+    public long mSessionId;
+
+    public Cache(long id, UUID reference, long sessionId) {
+      mId = id;
+      mReference = reference;
+      mSessionId = sessionId;
+    }
+
+    public boolean matches(String userReference) {
+      // TODO: Should it cache the string UUID to make comparisons faster?
+      return (mReference != null && mReference.equals(UUID.fromString(userReference)));
     }
   }
 }

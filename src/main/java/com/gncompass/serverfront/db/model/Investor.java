@@ -21,7 +21,7 @@ public class Investor extends User {
   private static final String PAY_DAY = "pay_day";
 
   // Database parameters
-  public int mId = 0;
+  public long mId = 0;
   public byte[] mReference = null;
   public String mEmail = null;
   //public int mType = 0;
@@ -101,7 +101,7 @@ public class Investor extends User {
   void updateFromFetch(ResultSet resultSet) throws SQLException {
     super.updateFromFetch(resultSet);
 
-    mId = resultSet.getInt(getColumn(ID));
+    mId = resultSet.getLong(getColumn(ID));
     mReference = resultSet.getBytes(getColumn(REFERENCE));
     mEmail = resultSet.getString(getColumn(EMAIL));
     //mType = resultSet.getInt(getColumn(TYPE));
@@ -136,6 +136,24 @@ public class Investor extends User {
     }
 
     return null;
+  }
+
+  /**
+   * Returns the user child table ID
+   * @return the user child table ID
+   */
+  @Override
+  public long getUserId() {
+    return mId;
+  }
+
+  /**
+   * Returns the user reference
+   * @return the user reference UUID
+   */
+  @Override
+  public UUID getUserReference() {
+    return mReferenceUuid;
   }
 
   /*

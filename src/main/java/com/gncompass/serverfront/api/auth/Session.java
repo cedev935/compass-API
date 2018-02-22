@@ -15,13 +15,13 @@ public class Session {
   public static final String ACCESS_KEY = "access_key";
 
   // Static list of all valid session key pairs (for either borrowers or investors)
-  private static Map<String, UserSession> sBorrowerSessions = new HashMap<>();
-  private static Map<String, UserSession> sInvestorSessions = new HashMap<>();
+  private static Map<String, UserSession.Cache> sBorrowerSessions = new HashMap<>();
+  private static Map<String, UserSession.Cache> sInvestorSessions = new HashMap<>();
   private static final Object sSessionLock = new Object();
 
   // Internals
   private final String mAccessKey;
-  private UserSession mUserSession = null;
+  private UserSession.Cache mSessionCache = null;
   private final UserType mType;
 
   public Session(HttpServletRequest request, UserType type) {
@@ -37,14 +37,14 @@ public class Session {
    * PRIVATE FUNCTIONS
    *============================================================*/
 
-  private void addSessionToCache(UserSession session) {
+  private void addSessionToCache() {
     synchronized (sSessionLock) {
       switch(mType) {
         case BORROWER:
-          sBorrowerSessions.put(mAccessKey, session);
+          sBorrowerSessions.put(mAccessKey, mSessionCache);
           break;
         case INVESTOR:
-          sInvestorSessions.put(mAccessKey, session);
+          sInvestorSessions.put(mAccessKey, mSessionCache);
           break;
         default:
           throw new RuntimeException("User type not implemented in addSessionToCache()");
@@ -56,10 +56,10 @@ public class Session {
     synchronized (sSessionLock) {
       switch(mType) {
         case BORROWER:
-          mUserSession = sBorrowerSessions.get(mAccessKey);
+          mSessionCache = sBorrowerSessions.get(mAccessKey);
           break;
         case INVESTOR:
-          mUserSession = sInvestorSessions.get(mAccessKey);
+          mSessionCache = sInvestorSessions.get(mAccessKey);
           break;
         default:
           throw new RuntimeException("User type not implemented in fetchSessionFromCache()");
@@ -72,12 +72,12 @@ public class Session {
    *============================================================*/
 
   public boolean isValid() {
-    return (mAccessKey != null && mUserSession != null);
+    return (mAccessKey != null && mSessionCache != null);
   }
 
   public void updateAccessed() {
     if (isValid()) {
-      mUserSession.updateAccessed();
+      UserSession.updateAccessed(mSessionCache);
     }
   }
 
@@ -89,8 +89,8 @@ public class Session {
         // If it already thinks its valid from the cache, just verify equivalence
         if(isValid()) {
           // If the user requested doesn't match, nullify session user. Requesting invalid user
-          if(!mUserSession.matches(mType, userReference)) {
-            mUserSession = null;
+          if(!mSessionCache.matches(userReference)) {
+            mSessionCache = null;
           }
         }
         // Otherwise, need to fetch from database
@@ -99,12 +99,13 @@ public class Session {
           if(accessKey != null) {
             UserSession userSession = new UserSession().getSession(mType, userReference, accessKey);
             if(userSession != null) {
-              addSessionToCache(userSession);
+              mSessionCache = userSession.getCache();
+              addSessionToCache();
             }
           }
         }
       } else {
-        mUserSession = null;
+        mSessionCache = null;
       }
     }
 

@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public abstract class User extends AbstractObject {
   // Database name
@@ -37,8 +38,8 @@ public abstract class User extends AbstractObject {
   }
 
   // Database parameters
-  public int mParentId = 0;
-  //public int mChildId = 0;
+  public long mParentId = 0;
+  //public long mChildId = 0;
   //public int mType = 0;
   //public byte[] mPassword = null;
   public Timestamp mPasswordDate = null;
@@ -122,8 +123,8 @@ public abstract class User extends AbstractObject {
    */
   @Override
   void updateFromFetch(ResultSet resultSet) throws SQLException {
-    mParentId = resultSet.getInt(getColumnParent(PARENT_ID));
-    //mChildId = resultSet.getInt(getColumnParent(CHILD_ID));
+    mParentId = resultSet.getLong(getColumnParent(PARENT_ID));
+    //mChildId = resultSet.getLong(getColumnParent(CHILD_ID));
     //mType = resultSet.getInt(getColumnParent(TYPE));
     //mPassword = resultSet.getBytes(getColumnParent(PASSWORD));
     mPasswordDate = resultSet.getTimestamp(getColumnParent(PASSWORD_DATE));
@@ -144,7 +145,19 @@ public abstract class User extends AbstractObject {
    * PUBLIC FUNCTIONS
    *============================================================*/
 
-  /*
+  /**
+   * Returns the user child table ID (abstract)
+   * @return the user child table ID
+   */
+  public abstract long getUserId();
+
+  /**
+   * Returns the user reference (abstract)
+   * @return the user reference UUID
+   */
+  public abstract UUID getUserReference();
+
+  /**
    * Returns the user type (abstract)
    * @return the user type enum
    */
