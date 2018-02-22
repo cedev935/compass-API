@@ -1,7 +1,5 @@
 package com.gncompass.serverfront.api.model;
 
-import com.gncompass.serverfront.util.StringHelper;
-
 import java.util.logging.Logger;
 
 import javax.json.JsonObject;

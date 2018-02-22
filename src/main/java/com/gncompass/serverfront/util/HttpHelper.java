@@ -1,21 +1,19 @@
 package com.gncompass.serverfront.util;
 
+import com.gncompass.serverfront.api.model.ErrorResult;
+
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.json.Json;
-import javax.json.JsonObject;
 import javax.json.JsonStructure;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 public class HttpHelper {
   public static String CONTENT_JSON = "application/json";
-  private static final String JSON_ERROR_CODE = "error_code";
-  private static final String JSON_ERROR_STRING = "error_string";
 
   public enum RequestType {
     DELETE,
@@ -96,7 +94,7 @@ public class HttpHelper {
                                   JsonStructure response) throws IOException {
     httpResponse.setStatus(httpCode);
     if(response != null) {
-      httpResponse.setContentType("application/json");
+      httpResponse.setContentType(CONTENT_JSON);
       httpResponse.getWriter().write(response.toString());
     }
   }
@@ -111,11 +109,7 @@ public class HttpHelper {
    */
   public static void setResponseError(HttpServletResponse httpResponse, int httpCode, int errorCode,
                                       String error) throws IOException {
-    JsonObject response = Json.createObjectBuilder()
-        .add(JSON_ERROR_CODE, errorCode)
-        .add(JSON_ERROR_STRING, error)
-        .build();
-    setResponse(httpResponse, httpCode, response);
+    setResponse(httpResponse, httpCode, new ErrorResult(errorCode, error).toJson());
   }
 
   /**
