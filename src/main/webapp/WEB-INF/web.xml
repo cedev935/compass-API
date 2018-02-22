@@ -19,4 +19,16 @@
       <filter-name>ApiOriginFilter</filter-name>
       <url-pattern>/*</url-pattern>
   </filter-mapping>
+  <filter>
+    <filter-name>AuthBorrowerFilter</filter-name>
+    <filter-class>com.gncompass.serverfront.api.filter.AuthBorrowerFilter</filter-class>
+    <init-param>
+      <param-name>subPathFilter</param-name>
+      <param-value>^/core/v1/borrowers/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(/.*)?$</param-value>
+    </init-param>
+  </filter>
+  <filter-mapping>
+    <filter-name>AuthBorrowerFilter</filter-name>
+    <url-pattern>/core/v1/borrowers/*</url-pattern>
+  </filter-mapping>
 </web-app>

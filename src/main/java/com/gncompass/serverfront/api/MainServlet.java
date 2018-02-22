@@ -1,6 +1,7 @@
 package com.gncompass.serverfront.api;
 
 import com.gncompass.serverfront.api.parser.BorrowerParser;
+import com.gncompass.serverfront.db.SQLManager;
 import com.gncompass.serverfront.util.HttpHelper;
 import com.gncompass.serverfront.util.HttpHelper.RequestType;
 
@@ -11,9 +12,16 @@ import java.util.Properties;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 
 public class MainServlet extends HttpServlet {
+
+  @Override
+  public void init(ServletConfig config) throws ServletException {
+    // General init of SQL system
+    SQLManager.init();
+  }
 
   @Override
   protected void doDelete(HttpServletRequest request, HttpServletResponse response)
