@@ -1,6 +1,7 @@
 package com.gncompass.serverfront.api;
 
 import com.gncompass.serverfront.api.parser.BorrowerParser;
+import com.gncompass.serverfront.api.parser.GeneralParser;
 import com.gncompass.serverfront.db.SQLManager;
 import com.gncompass.serverfront.util.HttpHelper;
 import com.gncompass.serverfront.util.HttpHelper.RequestType;
@@ -72,7 +73,8 @@ public class MainServlet extends HttpServlet {
       throws ServletException, IOException {
     List<String> pathChunks = HttpHelper.parseFullUrl(request);
     if (pathChunks.size() > 0) {
-      switch (pathChunks.remove(0)) {
+      String functionRoot = pathChunks.remove(0);
+      switch (functionRoot) {
         case BorrowerParser.PATH_MAIN:
           BorrowerParser.parseRequest(pathChunks, type, request, response);
           break;
@@ -81,8 +83,7 @@ public class MainServlet extends HttpServlet {
           response.setStatus(HttpServletResponse.SC_NOT_IMPLEMENTED);
           break;
         default:
-          // TODO!
-          response.setStatus(HttpServletResponse.SC_NOT_IMPLEMENTED);
+          GeneralParser.parseRequest(functionRoot, pathChunks, type, request, response);
           break;
       }
     } else {

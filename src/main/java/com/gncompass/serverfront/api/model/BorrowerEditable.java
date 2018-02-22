@@ -3,6 +3,7 @@ package com.gncompass.serverfront.api.model;
 import java.util.logging.Logger;
 
 import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
 import javax.servlet.http.HttpServletRequest;
 
 public class BorrowerEditable extends AbstractModel {
@@ -30,6 +31,28 @@ public class BorrowerEditable extends AbstractModel {
   public String mProvince = null;
 
   public BorrowerEditable() {
+  }
+
+  @Override
+  protected void addToJson(JsonObjectBuilder jsonBuilder) {
+    jsonBuilder.add(KEY_ADDRESS1, mAddress1);
+    if (mAddress2 != null) {
+      jsonBuilder.add(KEY_ADDRESS2, mAddress2);
+    }
+    if (mAddress3 != null) {
+      jsonBuilder.add(KEY_ADDRESS3, mAddress3);
+    }
+    jsonBuilder.add(KEY_CITY, mCity);
+    jsonBuilder.add(KEY_EMPLOYER, mEmployer);
+    jsonBuilder.add(KEY_JOB_TITLE, mJobTitle);
+    jsonBuilder.add(KEY_NAME, mName);
+    jsonBuilder.add(KEY_PHONE, mPhone);
+    if (mPostCode != null) {
+      jsonBuilder.add(KEY_POST_CODE, mPostCode);
+    }
+    if (mProvince != null) {
+      jsonBuilder.add(KEY_PROVINCE, mProvince);
+    }
   }
 
   @Override

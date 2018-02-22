@@ -5,10 +5,10 @@ import com.gncompass.serverfront.util.StringHelper;
 import java.util.logging.Logger;
 
 import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
 import javax.servlet.http.HttpServletRequest;
 
 public class RegisterRequest extends AbstractModel {
-  private static final int COUNTRY_CODE_LENGTH = 2;
   private static final String KEY_COUNTRY = "country";
   private static final String KEY_DEVICE_ID = "device_id";
   private static final String KEY_EMAIL = "email";
@@ -27,13 +27,22 @@ public class RegisterRequest extends AbstractModel {
   }
 
   @Override
+  protected void addToJson(JsonObjectBuilder jsonBuilder) {
+    jsonBuilder.add(KEY_COUNTRY, mCountry);
+    jsonBuilder.add(KEY_DEVICE_ID, mDeviceId);
+    jsonBuilder.add(KEY_EMAIL, mEmail);
+    jsonBuilder.add(KEY_NAME, mName);
+    jsonBuilder.add(KEY_PASSWORD, mPassword);
+  }
+
+  @Override
   protected Logger getLogger() {
     return LOG;
   }
 
   @Override
   public boolean isValid() {
-    return (mCountry != null && mCountry.length() == COUNTRY_CODE_LENGTH &&
+    return (mCountry != null && mCountry.length() == Country.CODE_LENGTH &&
             mDeviceId != null && StringHelper.isUuid(mDeviceId) &&
             mEmail != null && StringHelper.isEmail(mEmail) &&
             mName != null && mName.length() > 0 &&

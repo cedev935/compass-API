@@ -5,6 +5,7 @@ import com.gncompass.serverfront.util.StringHelper;
 import java.util.logging.Logger;
 
 import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
 import javax.servlet.http.HttpServletRequest;
 
 public class AuthRequest extends AbstractModel {
@@ -18,6 +19,13 @@ public class AuthRequest extends AbstractModel {
   public String mPassword = null;
 
   public AuthRequest() {
+  }
+
+  @Override
+  protected void addToJson(JsonObjectBuilder jsonBuilder) {
+    jsonBuilder.add(KEY_DEVICE_ID, mDeviceId);
+    jsonBuilder.add(KEY_EMAIL, mEmail);
+    jsonBuilder.add(KEY_PASSWORD, mPassword);
   }
 
   @Override

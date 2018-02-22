@@ -8,10 +8,12 @@ import java.util.List;
 
 import javax.json.Json;
 import javax.json.JsonObject;
+import javax.json.JsonStructure;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 public class HttpHelper {
+  public static String CONTENT_JSON = "application/json";
   private static final String JSON_ERROR_CODE = "error_code";
   private static final String JSON_ERROR_STRING = "error_string";
 
@@ -48,6 +50,17 @@ public class HttpHelper {
   }
 
   /**
+   * Is the content type JSON
+   * @request the HTTP servlet request
+   * @return TRUE if JSON type. FALSE otherwise
+   */
+  public static boolean isContentJson(HttpServletRequest request) {
+    String contentType = request.getContentType();
+    return (contentType != null && contentType.equals(CONTENT_JSON)
+            && request.getContentLength() > 0);
+  }
+
+  /**
    * Parse the full URI and return the chunks in a string list
    * @param request the HTTP servlet request
    * @return the string list of the parameters broken apart
@@ -80,7 +93,7 @@ public class HttpHelper {
    * @throws IOException throws on failed to access the writer of the HTTP response
    */
   private static void setResponse(HttpServletResponse httpResponse, int httpCode,
-                                  JsonObject response) throws IOException {
+                                  JsonStructure response) throws IOException {
     httpResponse.setStatus(httpCode);
     if(response != null) {
       httpResponse.setContentType("application/json");
@@ -111,7 +124,7 @@ public class HttpHelper {
    * @param response the JSON object response to write
    * @throws IOException throws on failed to access the writer of the HTTP response
    */
-  public static void setResponseSuccess(HttpServletResponse httpResponse, JsonObject response)
+  public static void setResponseSuccess(HttpServletResponse httpResponse, JsonStructure response)
       throws IOException {
     setResponseSuccess(httpResponse, HttpServletResponse.SC_OK, response);
   }
@@ -124,7 +137,7 @@ public class HttpHelper {
    * @throws IOException throws on failed to access the writer of the HTTP response
    */
   public static void setResponseSuccess(HttpServletResponse httpResponse, int httpCode,
-                                        JsonObject response) throws IOException {
+                                        JsonStructure response) throws IOException {
     setResponse(httpResponse, httpCode, response);
   }
 }

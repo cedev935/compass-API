@@ -1,5 +1,7 @@
 package com.gncompass.serverfront.api.model;
 
+import com.gncompass.serverfront.util.HttpHelper;
+
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.IOException;
@@ -9,18 +11,19 @@ import java.util.logging.Logger;
 import javax.json.Json;
 import javax.json.JsonException;
 import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
 import javax.json.JsonReader;
 import javax.servlet.http.HttpServletRequest;
 
 public abstract class AbstractModel {
-  protected static String CONTENT_JSON = "application/json";
 
+  protected abstract void addToJson(JsonObjectBuilder jsonBuilder);
   protected abstract Logger getLogger();
   public abstract boolean isValid();
   public abstract void parse(HttpServletRequest request);
 
-  public JsonObject getContent(HttpServletRequest request) {
-    if (isContentJson(request)) {
+  protected JsonObject getContent(HttpServletRequest request) {
+    if (HttpHelper.isContentJson(request)) {
       try (InputStream inputStream = request.getInputStream()) {
         try (JsonReader jsonReader = Json.createReader(inputStream)) {
           return jsonReader.readObject();
@@ -36,9 +39,20 @@ public abstract class AbstractModel {
     return null;
   }
 
-  public boolean isContentJson(HttpServletRequest request) {
-    String contentType = request.getContentType();
-    return (contentType != null && contentType.equals(CONTENT_JSON)
-            && request.getContentLength() > 0);
+  public JsonObject toJson() {
+    JsonObjectBuilder jsonBuilder = toJsonBuilder();
+    if (jsonBuilder != null) {
+      return jsonBuilder.build();
+    }
+    return null;
+  }
+
+  public JsonObjectBuilder toJsonBuilder() {
+    if(isValid()) {
+      JsonObjectBuilder jsonBuilder = Json.createObjectBuilder();
+      addToJson(jsonBuilder);
+      return jsonBuilder;
+    }
+    return null;
   }
 }
