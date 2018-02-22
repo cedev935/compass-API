@@ -4,8 +4,10 @@ public class StringHelper {
 private final static char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
   private static final String REGEX_END = "$";
   private static final String REGEX_START = "^";
+  private static final String REGEX_EMAIL = "(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])";
   private static final String REGEX_UUID = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[34][0-9a-fA-F]{3}-[89ab][0-9a-fA-F]{3}-[0-9a-fA-F]{12}";
   private static final String REGEX_ACCESS_KEY = REGEX_START + REGEX_UUID + "-" + REGEX_UUID + REGEX_END;
+  private static final String REGEX_EMAIL_ONLY = REGEX_START + REGEX_EMAIL + REGEX_END;
   private static final String REGEX_UUID_ONLY = REGEX_START + REGEX_UUID + REGEX_END;
 
   private static final int UUID_LENGTH = 36;
@@ -46,6 +48,15 @@ private final static char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
    */
   public static boolean isAccessKey(String check) {
     return check.matches(REGEX_ACCESS_KEY);
+  }
+
+  /**
+   * Returns if the string to check exactly matches the email format
+   * @param check the string to check if its email
+   * @return TRUE if it matches. FALSE otherwise
+   */
+  public static boolean isEmail(String check) {
+    return check.matches(REGEX_EMAIL_ONLY);
   }
 
   /**
