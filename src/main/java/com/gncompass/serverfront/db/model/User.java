@@ -52,7 +52,7 @@ public abstract class User extends AbstractObject {
   public String mCity = null;
   public String mProvince = null;
   public String mPostCode = null;
-  public String mCountry = null;
+  public int mCountryId = 0;
   public Timestamp mCreated = null;
 
   /*=============================================================
@@ -137,7 +137,7 @@ public abstract class User extends AbstractObject {
     mCity = resultSet.getString(getColumnParent(CITY));
     mProvince = resultSet.getString(getColumnParent(PROVINCE));
     mPostCode = resultSet.getString(getColumnParent(POST_CODE));
-    mCountry = resultSet.getString(getColumnParent(COUNTRY));
+    mCountryId = resultSet.getInt(getColumnParent(COUNTRY));
     mCreated = resultSet.getTimestamp(getColumnParent(CREATED));
   }
 
