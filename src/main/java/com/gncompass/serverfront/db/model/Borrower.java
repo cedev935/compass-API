@@ -162,6 +162,7 @@ public class Borrower extends User {
    * @return TRUE if successfully added. FALSE otherwise
    * @throws SQLException exception on insert
    */
+  @Override
   public boolean addToDatabase(Connection conn) throws SQLException {
    if (mReferenceUuid != null && mEmail != null && mPhone != null && mEmployer != null &&
        mJobTitle != null) {

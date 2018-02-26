@@ -57,9 +57,17 @@ public class Session {
       switch(mType) {
         case BORROWER:
           mSessionCache = sBorrowerSessions.get(mAccessKey);
+          if (mSessionCache != null && mSessionCache.isExpired()) {
+            sBorrowerSessions.remove(mAccessKey);
+            mSessionCache = null;
+          }
           break;
         case INVESTOR:
           mSessionCache = sInvestorSessions.get(mAccessKey);
+          if (mSessionCache != null && mSessionCache.isExpired()) {
+            sInvestorSessions.remove(mAccessKey);
+            mSessionCache = null;
+          }
           break;
         default:
           throw new RuntimeException("User type not implemented in fetchSessionFromCache()");
@@ -89,7 +97,9 @@ public class Session {
         // If it already thinks its valid from the cache, just verify equivalence
         if(isValid()) {
           // If the user requested doesn't match, nullify session user. Requesting invalid user
-          if(!mSessionCache.matches(userReference)) {
+          if(mSessionCache.matches(userReference)) {
+            mSessionCache.updateAccessed();
+          } else {
             mSessionCache = null;
           }
         }

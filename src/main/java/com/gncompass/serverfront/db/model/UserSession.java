@@ -285,6 +285,10 @@ public class UserSession extends AbstractObject {
    *============================================================*/
 
   public static class Cache {
+    private static final long EXPIRATION_HRS = 1;
+    private static final long EXPIRATION_MS = EXPIRATION_HRS * 60 * 60 * 1000;
+
+    public Date mAccessed;
     public long mId;
     public UUID mReference;
     public long mSessionId;
@@ -293,11 +297,22 @@ public class UserSession extends AbstractObject {
       mId = id;
       mReference = reference;
       mSessionId = sessionId;
+
+      updateAccessed();
+    }
+
+    public boolean isExpired() {
+      long diffInMillies = new Date().getTime() - mAccessed.getTime();
+      return (diffInMillies > EXPIRATION_MS);
     }
 
     public boolean matches(String userReference) {
       // TODO: Should it cache the string UUID to make comparisons faster?
       return (mReference != null && mReference.equals(UUID.fromString(userReference)));
+    }
+
+    public void updateAccessed() {
+      mAccessed = new Date();
     }
   }
 }
