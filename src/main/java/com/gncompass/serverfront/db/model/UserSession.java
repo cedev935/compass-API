@@ -1,5 +1,7 @@
 package com.gncompass.serverfront.db.model;
 
+import com.gncompass.serverfront.api.model.AuthResponse;
+import com.gncompass.serverfront.db.InsertBuilder;
 import com.gncompass.serverfront.db.SelectBuilder;
 import com.gncompass.serverfront.db.SQLManager;
 import com.gncompass.serverfront.db.UpdateBuilder;
@@ -35,6 +37,8 @@ public class UserSession extends AbstractObject {
   public Timestamp mAccessed = null;
 
   // Internals
+  public UUID mDeviceUuid = null;
+  public UUID mSessionUuid = null;
   public User mUser = null;
 
   public UserSession() {
@@ -42,6 +46,12 @@ public class UserSession extends AbstractObject {
 
   public UserSession(Cache sessionCache) {
     mId = sessionCache.mSessionId;
+  }
+
+  public UserSession(User user, UUID deviceUuid, UUID sessionUuid) {
+    mDeviceUuid = deviceUuid;
+    mSessionUuid = sessionUuid;
+    mUser = user;
   }
 
   /*=============================================================
@@ -133,6 +143,58 @@ public class UserSession extends AbstractObject {
   /*=============================================================
    * PUBLIC FUNCTIONS
    *============================================================*/
+
+  /**
+   * Adds the user to the database first and then establishes this first session with the user.
+   * This is all done within one transaction. If any call fails, the whole call is reverted
+   * @return TRUE if successful and the entry exists. FALSE otherwise
+   */
+  public boolean addToDatabaseWithUser() {
+    // Make sure the correct parameters were set
+    if(mDeviceUuid != null && mSessionUuid != null && mUser != null) {
+      // Create the session insert statement
+      String insertSql = new InsertBuilder(getTable())
+          .set(USER_ID, "LAST_INSERT_ID()")
+          .set(DEVICE_ID, UuidHelper.getHexFromUUID(mDeviceUuid, true))
+          .set(SESSION_KEY, UuidHelper.getHexFromUUID(mSessionUuid, true))
+          .toString();
+
+      // Try to fetch a connection
+      try (Connection conn = SQLManager.getConnection()) {
+        boolean success = false;
+
+        // Start the transaction by ceasing auto commits
+        conn.setAutoCommit(false);
+
+        // Execute against the user first
+        if (mUser.addToDatabase(conn)) {
+          // Execute session insert statement (should return 1 row)
+          if (conn.prepareStatement(insertSql).executeUpdate() == 1) {
+            success = true;
+          }
+        }
+
+        // Depending on the result, either commit or rollback
+        if (success) {
+          conn.commit();
+          return true;
+        } else {
+          conn.rollback();
+        }
+      } catch (SQLException e) {
+        throw new RuntimeException("Unable to add the new user with the new session", e);
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Returns the auth response model for the API
+   * @return the auth response model
+   */
+  public AuthResponse getAuthResponse() {
+    return new AuthResponse(mSessionUuid.toString(), mUser.getUserReference().toString());
+  }
 
   /**
    * Returns the user session cache object

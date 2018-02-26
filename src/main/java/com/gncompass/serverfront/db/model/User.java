@@ -1,7 +1,10 @@
 package com.gncompass.serverfront.db.model;
 
+import com.gncompass.serverfront.db.InsertBuilder;
 import com.gncompass.serverfront.db.SelectBuilder;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -14,10 +17,9 @@ public abstract class User extends AbstractObject {
   protected static final String TABLE_NAME = "Users";
 
   // Database column names
-  private static final String PARENT_ID = "id";
-  private static final String CHILD_ID = "child_id";
+  private static final String ID = "id";
   private static final String TYPE = "type";
-  //private static final String PASSWORD = "password";
+  private static final String PASSWORD = "password";
   private static final String PASSWORD_DATE = "password_date";
   private static final String NAME = "name";
   private static final String ENABLED = "enabled";
@@ -33,13 +35,22 @@ public abstract class User extends AbstractObject {
 
   // User types enumerator (all inherited children)
   public static enum UserType {
-    BORROWER,
-    INVESTOR
+    BORROWER(1),
+    INVESTOR(2);
+
+    private final int value;
+
+    private UserType(int value) {
+      this.value = value;
+    }
+
+    public int getValue() {
+      return value;
+    }
   }
 
   // Database parameters
-  public long mParentId = 0;
-  //public long mChildId = 0;
+  public long mId = 0;
   //public int mType = 0;
   //public byte[] mPassword = null;
   public Timestamp mPasswordDate = null;
@@ -52,8 +63,24 @@ public abstract class User extends AbstractObject {
   public String mCity = null;
   public String mProvince = null;
   public String mPostCode = null;
-  public int mCountryId = 0;
+  public long mCountryId = 0;
   public Timestamp mCreated = null;
+
+  // Internals
+  public String mPasswordHash = null;
+
+  protected User() {
+  }
+
+  protected User(String name, String passwordHash, Country country) {
+    mName = name;
+    mEnabled = true;
+    mAddress1 = "";
+    mCity = "";
+    mCountryId = country.mId;
+
+    mPasswordHash = passwordHash;
+  }
 
   /*=============================================================
    * PROTECTED FUNCTIONS
@@ -78,13 +105,12 @@ public abstract class User extends AbstractObject {
    */
   protected SelectBuilder buildSelectParentSql(String childIdColumn, String childTypeColumn,
                                                String idColumn) {
-    SelectBuilder selectBuilder = new SelectBuilder()
-        .join(getTableParent(),
-              getColumnParent(CHILD_ID) + "=" + childIdColumn + " AND " +
-              getColumnParent(TYPE) + "=" + childTypeColumn +
-              (idColumn != null ? " AND " + getColumnParent(PARENT_ID) + "=" + idColumn : ""))
-        .column(getColumnParent(PARENT_ID))
-        //.column(getColumnParent(CHILD_ID))
+    SelectBuilder selectBuilder = new SelectBuilder();
+    selectBuilder.join(getTableParent(),
+                       getColumnParent(ID) + "=" + childIdColumn + " AND " +
+                       getColumnParent(TYPE) + "=" + childTypeColumn +
+                       (idColumn != null ? " AND " + getColumnParent(ID) + "=" + idColumn : ""))
+        .column(getColumnParent(ID))
         //.column(getColumnParent(TYPE))
         //.column(getColumnParent(PASSWORD))
         .column(getColumnParent(PASSWORD_DATE))
@@ -123,8 +149,7 @@ public abstract class User extends AbstractObject {
    */
   @Override
   void updateFromFetch(ResultSet resultSet) throws SQLException {
-    mParentId = resultSet.getLong(getColumnParent(PARENT_ID));
-    //mChildId = resultSet.getLong(getColumnParent(CHILD_ID));
+    mId = resultSet.getLong(getColumnParent(ID));
     //mType = resultSet.getInt(getColumnParent(TYPE));
     //mPassword = resultSet.getBytes(getColumnParent(PASSWORD));
     mPasswordDate = resultSet.getTimestamp(getColumnParent(PASSWORD_DATE));
@@ -137,7 +162,7 @@ public abstract class User extends AbstractObject {
     mCity = resultSet.getString(getColumnParent(CITY));
     mProvince = resultSet.getString(getColumnParent(PROVINCE));
     mPostCode = resultSet.getString(getColumnParent(POST_CODE));
-    mCountryId = resultSet.getInt(getColumnParent(COUNTRY));
+    mCountryId = resultSet.getLong(getColumnParent(COUNTRY));
     mCreated = resultSet.getTimestamp(getColumnParent(CREATED));
   }
 
@@ -146,10 +171,42 @@ public abstract class User extends AbstractObject {
    *============================================================*/
 
   /**
-   * Returns the user child table ID (abstract)
+   * Adds the user to the database
+   * @param conn the SQL connection
+   * @return TRUE if successfully added. FALSE otherwise
+   * @throws SQLException exception on insert
+   */
+  public boolean addToDatabase(Connection conn) throws SQLException {
+    if (mPasswordHash != null && mName != null && mAddress1 != null && mCity != null &&
+        mCountryId > 0) {
+      // Create the user insert statement
+      String insertSql = new InsertBuilder(getTableParent())
+          .set(TYPE, Integer.toString(getUserType().getValue()))
+          .setString(PASSWORD, mPasswordHash)
+          .set(NAME, "?")
+          .setString(ADDRESS1, mAddress1)
+          .setString(CITY, mCity)
+          .setString(COUNTRY, Long.toString(mCountryId))
+          .toString();
+
+      // Execute the insert
+      try (PreparedStatement statement = conn.prepareStatement(insertSql)) {
+        statement.setString(1, mName);
+        if (statement.executeUpdate() == 1) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Returns the user table ID
    * @return the user child table ID
    */
-  public abstract long getUserId();
+  public long getUserId() {
+    return mId;
+  }
 
   /**
    * Returns the user reference (abstract)

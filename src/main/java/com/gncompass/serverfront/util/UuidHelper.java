@@ -30,12 +30,22 @@ public class UuidHelper {
 
   /**
    * Returns the hex string from a UUID
-   * @param uuid the UUID to convert
+   * @param uuid the UUID string to convert
    * @param leadingZero TRUE to add '0x' portion to string
    * @return the string hex result
    */
   public static String getHexFromUUID(String uuid, boolean leadingZero) {
     return (leadingZero ? LEADING_ZERO : "") + uuid.replace("-", "");
+  }
+
+  /**
+   * Returns the hex string from a UUID
+   * @param uuid the UUID object to convert
+   * @param leadingZero TRUE to add '0x' portion to string
+   * @return the string hex result
+   */
+  public static String getHexFromUUID(UUID uuid, boolean leadingZero) {
+    return getHexFromUUID(uuid.toString(), leadingZero);
   }
 
   /**

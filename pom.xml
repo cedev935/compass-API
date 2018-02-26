@@ -76,6 +76,12 @@
         <version>1.2.2</version>
     </dependency>
 
+    <dependency>
+        <groupId>de.svenkubiak</groupId>
+        <artifactId>jBCrypt</artifactId>
+        <version>0.4.1</version>
+    </dependency>
+
     <!-- Test Dependencies -->
     <dependency>
       <groupId>com.google.appengine</groupId>

@@ -21,7 +21,7 @@ public class Investor extends User {
   private static final String PAY_DAY = "pay_day";
 
   // Database parameters
-  public long mId = 0;
+  //public long mId = 0;
   public byte[] mReference = null;
   public String mEmail = null;
   //public int mType = 0;
@@ -37,32 +37,45 @@ public class Investor extends User {
   /**
    * Build the select SQL for all properties related to the investor. Allows for choosing between
    * JOIN or FROM for how this table is connected
+   * @param primaryWhere the primary where entry for the call
+   * @param isJoin TRUE if is JOIN. FALSE if is FROM
+   * @param userIdColumn if JOIN, a user id column defines the matching ON column to join for the
+   *                     parent ID
+   * @return the SelectBuilder reference object
+   */
+  private SelectBuilder buildSelectSql(String primaryWhere, boolean isJoin, String userIdColumn) {
+    SelectBuilder selectBuilder =
+        super.buildSelectParentSql(getColumn(ID), getColumn(TYPE), isJoin ? userIdColumn : null)
+        //.column(getColumn(ID))
+        .column(getColumn(REFERENCE))
+        .column(getColumn(EMAIL))
+        //.column(getColumn(TYPE))
+        .column(getColumn(PAY_DAY));
+
+    if (isJoin) {
+      selectBuilder
+          .join(getTable(), primaryWhere, true);
+    } else {
+      selectBuilder
+          .from(getTable())
+          .where(primaryWhere);
+    }
+
+    return selectBuilder;
+  }
+
+  /**
+   * Build the select SQL for all properties related to the investor. Allows for choosing between
+   * JOIN or FROM for how this table is connected
    * @param reference the investor UUID reference
    * @param isJoin TRUE if is JOIN. FALSE if is FROM
    * @param userIdColumn if JOIN, a user id column defines the matching ON column to join for the
    *                     parent ID
    * @return the SelectBuilder reference object
    */
-  private SelectBuilder buildSelectSql(String reference, boolean isJoin, String userIdColumn) {
-    SelectBuilder selectBuilder =
-        super.buildSelectParentSql(getColumn(ID), getColumn(TYPE), isJoin ? userIdColumn : null)
-        .column(getColumn(ID))
-        .column(getColumn(REFERENCE))
-        .column(getColumn(EMAIL))
-        //.column(getColumn(TYPE))
-        .column(getColumn(PAY_DAY));
-
+  private SelectBuilder buildSelectRefSql(String reference, boolean isJoin, String userIdColumn) {
     String refMatch = getColumn(REFERENCE) + "=" + UuidHelper.getHexFromUUID(reference, true);
-    if (isJoin) {
-      selectBuilder
-          .join(getTable(), refMatch, true);
-    } else {
-      selectBuilder
-          .from(getTable())
-          .where(refMatch);
-    }
-
-    return selectBuilder;
+    return buildSelectSql(refMatch, isJoin, userIdColumn);
   }
 
   /*=============================================================
@@ -101,7 +114,7 @@ public class Investor extends User {
   void updateFromFetch(ResultSet resultSet) throws SQLException {
     super.updateFromFetch(resultSet);
 
-    mId = resultSet.getLong(getColumn(ID));
+    //mId = resultSet.getLong(getColumn(ID));
     mReference = resultSet.getBytes(getColumn(REFERENCE));
     mEmail = resultSet.getString(getColumn(EMAIL));
     //mType = resultSet.getInt(getColumn(TYPE));
@@ -136,15 +149,6 @@ public class Investor extends User {
     }
 
     return null;
-  }
-
-  /**
-   * Returns the user child table ID
-   * @return the user child table ID
-   */
-  @Override
-  public long getUserId() {
-    return mId;
   }
 
   /**

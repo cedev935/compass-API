@@ -53,9 +53,8 @@ public class Country extends AbstractObject {
 
     if (code != null) {
       selectBuilder.where(getColumn(CODE) + "='" + code + "'");
-    } else {
-      selectBuilder.where(getColumn(ENABLED) + "=1");
     }
+    selectBuilder.where(getColumn(ENABLED) + "=1");
 
     return selectBuilder;
   }
@@ -85,6 +84,30 @@ public class Country extends AbstractObject {
    */
   public com.gncompass.serverfront.api.model.Country getApiModel() {
     return new com.gncompass.serverfront.api.model.Country(mCode, mName);
+  }
+
+  /**
+   * Returns the country that matches the code provided (assuming it's enabled and exists)
+   * @param code the country code (Eg, 'CA')
+   * @return the country reference. NULL if not found
+   */
+  public Country getCountry(String code) {
+    // Build the query
+    String selectSql = buildSelectSql(code).toString();
+
+    // Try to execute against the connection
+    try (Connection conn = SQLManager.getConnection()) {
+      try (ResultSet rs = conn.prepareStatement(selectSql).executeQuery()) {
+        if (rs.next()) {
+          updateFromFetch(rs);
+          return this;
+        }
+      }
+    } catch (SQLException e) {
+      throw new RuntimeException("Unable to fetch the country by code with SQL", e);
+    }
+
+    return null;
   }
 
   /*
