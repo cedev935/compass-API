@@ -7,7 +7,9 @@ import com.gncompass.serverfront.util.StringHelper;
 import com.gncompass.serverfront.util.StringHelper.AccessKey;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -120,5 +122,21 @@ public class Session {
     }
 
     return isValid();
+  }
+
+  /*=============================================================
+   * STATIC FUNCTIONS
+   *============================================================*/
+
+  public static void uncacheBorrower(UUID borrowerReference) {
+    synchronized (sSessionLock) {
+      for(Iterator<Map.Entry<String, UserSession.Cache>> it = sBorrowerSessions.entrySet().iterator();
+          it.hasNext(); ) {
+        Map.Entry<String, UserSession.Cache> entry = it.next();
+        if(entry.getValue().matches(borrowerReference)) {
+          it.remove();
+        }
+      }
+    }
   }
 }

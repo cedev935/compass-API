@@ -1,6 +1,7 @@
 package com.gncompass.serverfront.db.model;
 
 import com.gncompass.serverfront.api.model.AuthResponse;
+import com.gncompass.serverfront.db.DeleteBuilder;
 import com.gncompass.serverfront.db.InsertBuilder;
 import com.gncompass.serverfront.db.SelectBuilder;
 import com.gncompass.serverfront.db.SQLManager;
@@ -145,6 +146,30 @@ public class UserSession extends AbstractObject {
    *============================================================*/
 
   /**
+   * Adds this session to the database for an existing user
+   * @return TRUE if success. FALSE otherwise
+   */
+  public boolean addToDatabase() {
+    // Make sure the correct parameters were set
+    if(mDeviceUuid != null && mSessionUuid != null && mUser != null) {
+      // Create the session insert statement
+      String insertSql = new InsertBuilder(getTable())
+          .set(USER_ID, Long.toString(mUser.mId))
+          .set(DEVICE_ID, UuidHelper.getHexFromUUID(mDeviceUuid, true))
+          .set(SESSION_KEY, UuidHelper.getHexFromUUID(mSessionUuid, true))
+          .toString();
+
+      // Try to fetch a connection
+      try (Connection conn = SQLManager.getConnection()) {
+        return (conn.prepareStatement(insertSql).executeUpdate() == 1);
+      } catch (SQLException e) {
+        throw new RuntimeException("Unable to add the new session for an existing user", e);
+      }
+    }
+    return false;
+  }
+
+  /**
    * Adds the user to the database first and then establishes this first session with the user.
    * This is all done within one transaction. If any call fails, the whole call is reverted
    * @return TRUE if successful and the entry exists. FALSE otherwise
@@ -186,6 +211,34 @@ public class UserSession extends AbstractObject {
       }
     }
     return false;
+  }
+
+  /**
+   * Deletes all sessions that match the specific parameters of this session. This requires the
+   * user ID and the device UUID to be set. Optionally, it will also enforce by session UUID
+   * @return the number of rows deleted
+   */
+  public int deleteIfMatches() {
+    if(mDeviceUuid != null && mUser != null) {
+      // Create the session delete statement
+      DeleteBuilder deleteSqlBuilder = new DeleteBuilder(getTable())
+          .where(getColumn(USER_ID) + "=" + mUser.mId)
+          .where(getColumn(DEVICE_ID) + "=" + UuidHelper.getHexFromUUID(mDeviceUuid, true));
+      if(mSessionKey != null) {
+        deleteSqlBuilder.where(
+            getColumn(SESSION_KEY) + "=" + UuidHelper.getHexFromUUID(mSessionUuid, true));
+      }
+      String deleteSql = deleteSqlBuilder.toString();
+
+      // Try to fetch a connection
+      try (Connection conn = SQLManager.getConnection()) {
+        // Execute session delete statement
+        return conn.prepareStatement(deleteSql).executeUpdate();
+      } catch (SQLException e) {
+        throw new RuntimeException("Unable to delete old user sessions", e);
+      }
+    }
+    return 0;
   }
 
   /**
@@ -276,6 +329,10 @@ public class UserSession extends AbstractObject {
    * STATIC FUNCTIONS
    *============================================================*/
 
+  public static void deleteIfMatches(User user, UUID deviceUuid) {
+    new UserSession(user, deviceUuid, null).deleteIfMatches();
+  }
+
   public static void updateAccessed(Cache sessionCache) {
     new UserSession(sessionCache).updateAccessed();
   }
@@ -308,7 +365,11 @@ public class UserSession extends AbstractObject {
 
     public boolean matches(String userReference) {
       // TODO: Should it cache the string UUID to make comparisons faster?
-      return (mReference != null && mReference.equals(UUID.fromString(userReference)));
+      return matches(UUID.fromString(userReference));
+    }
+
+    public boolean matches(UUID userReference) {
+      return (mReference != null && mReference.equals(userReference));
     }
 
     public void updateAccessed() {

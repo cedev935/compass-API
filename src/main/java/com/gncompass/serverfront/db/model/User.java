@@ -52,7 +52,7 @@ public abstract class User extends AbstractObject {
   // Database parameters
   public long mId = 0;
   //public int mType = 0;
-  //public byte[] mPassword = null;
+  public String mPassword = null;
   public Timestamp mPasswordDate = null;
   public String mName = null;
   public boolean mEnabled = false;
@@ -66,9 +66,6 @@ public abstract class User extends AbstractObject {
   public long mCountryId = 0;
   public Timestamp mCreated = null;
 
-  // Internals
-  public String mPasswordHash = null;
-
   protected User() {
   }
 
@@ -79,7 +76,7 @@ public abstract class User extends AbstractObject {
     mCity = "";
     mCountryId = country.mId;
 
-    mPasswordHash = passwordHash;
+    mPassword = passwordHash;
   }
 
   /*=============================================================
@@ -112,7 +109,7 @@ public abstract class User extends AbstractObject {
                        (idColumn != null ? " AND " + getColumnParent(ID) + "=" + idColumn : ""))
         .column(getColumnParent(ID))
         //.column(getColumnParent(TYPE))
-        //.column(getColumnParent(PASSWORD))
+        .column(getColumnParent(PASSWORD))
         .column(getColumnParent(PASSWORD_DATE))
         .column(getColumnParent(NAME))
         .column(getColumnParent(ENABLED))
@@ -151,7 +148,7 @@ public abstract class User extends AbstractObject {
   void updateFromFetch(ResultSet resultSet) throws SQLException {
     mId = resultSet.getLong(getColumnParent(ID));
     //mType = resultSet.getInt(getColumnParent(TYPE));
-    //mPassword = resultSet.getBytes(getColumnParent(PASSWORD));
+    mPassword = resultSet.getString(getColumnParent(PASSWORD));
     mPasswordDate = resultSet.getTimestamp(getColumnParent(PASSWORD_DATE));
     mName = resultSet.getString(getColumnParent(NAME));
     mEnabled = resultSet.getBoolean(getColumnParent(ENABLED));
@@ -177,12 +174,12 @@ public abstract class User extends AbstractObject {
    * @throws SQLException exception on insert
    */
   public boolean addToDatabase(Connection conn) throws SQLException {
-    if (mPasswordHash != null && mName != null && mAddress1 != null && mCity != null &&
+    if (mPassword != null && mName != null && mAddress1 != null && mCity != null &&
         mCountryId > 0) {
       // Create the user insert statement
       String insertSql = new InsertBuilder(getTableParent())
           .set(TYPE, Integer.toString(getUserType().getValue()))
-          .setString(PASSWORD, mPasswordHash)
+          .setString(PASSWORD, mPassword)
           .set(NAME, "?")
           .setString(ADDRESS1, mAddress1)
           .setString(CITY, mCity)

@@ -212,6 +212,31 @@ public class Borrower extends User {
   }
 
   /**
+   * Fetches the borrower information, using the borrower email, from the database
+   * @param email the email to find the borrower for
+   * @return the Borrower class object with the information fetched. If not found, returns NULL
+   */
+  public Borrower getBorrowerByEmail(String email) {
+    // Build the query
+    String where = getColumn(EMAIL) + "='" + email + "'";
+    String selectSql = buildSelectSql(where, false, null).toString();
+
+    // Try to execute against the connection
+    try (Connection conn = SQLManager.getConnection()) {
+      try (ResultSet rs = conn.prepareStatement(selectSql).executeQuery()) {
+        if (rs.next()) {
+          updateFromFetch(rs);
+          return this;
+        }
+      }
+    } catch (SQLException e) {
+      throw new RuntimeException("Unable to fetch the borrower by email with SQL", e);
+    }
+
+    return null;
+  }
+
+  /**
    * Returns the user reference
    * @return the user reference UUID
    */
