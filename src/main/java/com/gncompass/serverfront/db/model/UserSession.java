@@ -242,6 +242,25 @@ public class UserSession extends AbstractObject {
   }
 
   /**
+   * Deletes the current session from the database
+   * @return TRUE if successful. FALSE if nothing was deleted
+   */
+  public boolean deleteSession() {
+    // Create the session delete statement
+    String deleteSql = new DeleteBuilder(getTable())
+        .where(getColumn(ID) + "=" + Long.toString(mId))
+        .toString();
+
+    // Try to fetch a connection
+    try (Connection conn = SQLManager.getConnection()) {
+      // Execute session delete statement
+      return (conn.prepareStatement(deleteSql).executeUpdate() == 1);
+    } catch (SQLException e) {
+      throw new RuntimeException("Unable to delete selected user session", e);
+    }
+  }
+
+  /**
    * Returns the auth response model for the API
    * @return the auth response model
    */

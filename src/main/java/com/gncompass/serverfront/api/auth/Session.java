@@ -128,6 +128,10 @@ public class Session {
    * STATIC FUNCTIONS
    *============================================================*/
 
+  public static AccessKey getAccessKey(HttpServletRequest request) {
+    return StringHelper.getAccessKey(request.getHeader(ACCESS_KEY));
+  }
+
   public static void uncacheBorrower(UUID borrowerReference) {
     synchronized (sSessionLock) {
       for(Iterator<Map.Entry<String, UserSession.Cache>> it = sBorrowerSessions.entrySet().iterator();
@@ -138,5 +142,9 @@ public class Session {
         }
       }
     }
+  }
+
+  public static void uncacheBorrower(String borrowerReference) {
+    uncacheBorrower(UUID.fromString(borrowerReference));
   }
 }

@@ -12,6 +12,7 @@ public class DeleteBuilder extends AbstractBuilder implements Serializable {
 
   private static final long serialVersionUID = 1;
   private String table;
+  private List<String> joins = new ArrayList<>();
   private List<String> wheres = new ArrayList<String>();
 
   public DeleteBuilder(String table) {
@@ -26,9 +27,20 @@ public class DeleteBuilder extends AbstractBuilder implements Serializable {
     }
 
     // Proceed with build
-    StringBuilder sql = new StringBuilder("DELETE FROM ").append(table);
+    StringBuilder sql = new StringBuilder("DELETE ");
+    if (joins.size() > 0) {
+      sql.append(table).append(" FROM ").append(table);
+    } else {
+      sql.append("FROM ").append(table);
+    }
+    appendList(sql, joins, " JOIN ", " JOIN ");
     appendList(sql, wheres, " WHERE ", " AND ");
     return sql.toString();
+  }
+
+  public DeleteBuilder join(String table, String on) {
+    joins.add(table + " ON " + on);
+    return this;
   }
 
   public DeleteBuilder where(String expr) {
