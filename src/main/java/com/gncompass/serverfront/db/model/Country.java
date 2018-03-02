@@ -40,23 +40,41 @@ public class Country extends AbstractObject {
 
   /**
    * Build the select SQL for all properties related to the country
+   * @param id the country ID
+   * @return the SelectBuilder reference object
+   */
+  protected SelectBuilder buildSelectSql(long id) {
+    SelectBuilder selectBuilder = buildSelectSql()
+        .where(getColumn(ID) + "=" + Long.toString(id));
+    return selectBuilder;
+  }
+
+  /**
+   * Build the select SQL for all properties related to the country
    * @param code the country code (E.g, 'CA')
    * @return the SelectBuilder reference object
    */
   protected SelectBuilder buildSelectSql(String code) {
-    SelectBuilder selectBuilder = new SelectBuilder(getTable())
-        .column(getColumn(ID))
-        .column(getColumn(CODE))
-        .column(getColumn(NAME))
-        .column(getColumn(REGION_ID))
-        .column(getColumn(ENABLED));
-
+    SelectBuilder selectBuilder = buildSelectSql();
     if (code != null) {
       selectBuilder.where(getColumn(CODE) + "='" + code + "'");
     }
     selectBuilder.where(getColumn(ENABLED) + "=1");
 
     return selectBuilder;
+  }
+
+  /**
+   * Build the select SQL for all properties related to all countries
+   * @return the SelectBuilder reference object
+   */
+  protected SelectBuilder buildSelectSql() {
+    return new SelectBuilder(getTable())
+        .column(getColumn(ID))
+        .column(getColumn(CODE))
+        .column(getColumn(NAME))
+        .column(getColumn(REGION_ID))
+        .column(getColumn(ENABLED));
   }
 
   /**
@@ -84,6 +102,30 @@ public class Country extends AbstractObject {
    */
   public com.gncompass.serverfront.api.model.Country getApiModel() {
     return new com.gncompass.serverfront.api.model.Country(mCode, mName);
+  }
+
+  /**
+   * Returns the country that matches the ID provided
+   * @param id the country ID
+   * @return the country reference. NULL if not found
+   */
+  public Country getCountry(long id) {
+    // Build the query
+    String selectSql = buildSelectSql(id).toString();
+
+    // Try to execute against the connection
+    try (Connection conn = SQLManager.getConnection()) {
+      try (ResultSet rs = conn.prepareStatement(selectSql).executeQuery()) {
+        if (rs.next()) {
+          updateFromFetch(rs);
+          return this;
+        }
+      }
+    } catch (SQLException e) {
+      throw new RuntimeException("Unable to fetch the country by ID with SQL", e);
+    }
+
+    return null;
   }
 
   /**

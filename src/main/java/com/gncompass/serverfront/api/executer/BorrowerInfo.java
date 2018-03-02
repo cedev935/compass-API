@@ -1,5 +1,6 @@
 package com.gncompass.serverfront.api.executer;
 
+import com.gncompass.serverfront.db.model.Borrower;
 import com.gncompass.serverfront.util.HttpHelper;
 import com.gncompass.serverfront.util.StringHelper;
 
@@ -20,13 +21,16 @@ public class BorrowerInfo extends AbstractExecuter {
 
   @Override
   protected void execute(HttpServletResponse response) throws ServletException, IOException {
-    // TODO! Implement
-    JsonObject jsonResponse = Json.createObjectBuilder()
-        .add("code", 4)
-        .add("type", "ok")
-        .add("message", "magic!")
-        .build();
-    HttpHelper.setResponseSuccess(response, jsonResponse);
+    // Fetch the borrower
+    Borrower borrower = new Borrower().getBorrower(mBorrowerUuid);
+    if (borrower != null) {
+        HttpHelper.setResponseSuccess(response, HttpServletResponse.SC_OK,
+                                      borrower.getViewable().toJson());
+    } else {
+      // This is a server error. Should never fail since this user was authenticated
+      HttpHelper.setResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+          1201, "The borrower information failed to be fetched from the repository");
+    }
   }
 
   @Override

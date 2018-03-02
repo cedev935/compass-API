@@ -1,5 +1,6 @@
 package com.gncompass.serverfront.db.model;
 
+import com.gncompass.serverfront.api.model.UserViewable;
 import com.gncompass.serverfront.db.InsertBuilder;
 import com.gncompass.serverfront.db.SelectBuilder;
 
@@ -218,6 +219,12 @@ public abstract class User extends AbstractObject {
   public abstract UserType getUserType();
 
   /**
+   * Returns the viewable API JSON container (abstract)
+   * @return the user viewable API object
+   */
+  public abstract UserViewable getViewable();
+
+  /**
    * Returns if the user reference matches the string UUID provided (abstract)
    * @param userReference the user UUID reference
    * @return TRUE if matches. FALSE if doesn't
@@ -232,5 +239,18 @@ public abstract class User extends AbstractObject {
    */
   public boolean matches(UserType type, String userReference) {
     return (getUserType() == type && matches(userReference));
+  }
+
+  /**
+   * Updates the viewable data set with the user data available in this parent
+   * @param viewable the viewable data set
+   */
+  public void updateViewable(UserViewable viewable) {
+    // Fetch the country code
+    Country country = new Country().getCountry(mCountryId);
+
+    // Set the data
+    viewable.setUserData(mName, mAddress1, mAddress2, mAddress3,
+                            mCity, mProvince, mPostCode, country != null ? country.mCode : null);
   }
 }

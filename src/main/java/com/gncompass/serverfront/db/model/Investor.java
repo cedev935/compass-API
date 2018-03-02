@@ -1,5 +1,6 @@
 package com.gncompass.serverfront.db.model;
 
+import com.gncompass.serverfront.api.model.UserViewable;
 import com.gncompass.serverfront.db.SelectBuilder;
 import com.gncompass.serverfront.db.SQLManager;
 import com.gncompass.serverfront.util.UuidHelper;
@@ -167,6 +168,16 @@ public class Investor extends User {
   @Override
   public UserType getUserType() {
     return UserType.INVESTOR;
+  }
+
+  /**
+   * Returns the viewable API JSON container
+   * @return the user viewable API object
+   */
+  @Override
+  public UserViewable getViewable() {
+    // TODO! Implement
+    throw new RuntimeException("Investor:getViewable() not implemented");
   }
 
   /**

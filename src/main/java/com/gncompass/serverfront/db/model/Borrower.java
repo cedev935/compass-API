@@ -1,5 +1,7 @@
 package com.gncompass.serverfront.db.model;
 
+import com.gncompass.serverfront.api.model.BorrowerViewable;
+import com.gncompass.serverfront.api.model.UserViewable;
 import com.gncompass.serverfront.db.InsertBuilder;
 import com.gncompass.serverfront.db.SelectBuilder;
 import com.gncompass.serverfront.db.SQLManager;
@@ -252,6 +254,18 @@ public class Borrower extends User {
   @Override
   public UserType getUserType() {
     return UserType.BORROWER;
+  }
+
+  /**
+   * Returns the viewable API JSON container
+   * @return the user viewable API object
+   */
+  @Override
+  public UserViewable getViewable() {
+    BorrowerViewable viewable =
+                      new BorrowerViewable(mEmail, mPhone, mEmployer, mJobTitle, mLoanCap);
+    super.updateViewable(viewable);
+    return viewable;
   }
 
   /**
