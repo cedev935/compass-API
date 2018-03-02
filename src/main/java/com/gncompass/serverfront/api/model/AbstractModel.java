@@ -16,6 +16,7 @@ import javax.json.JsonReader;
 import javax.servlet.http.HttpServletRequest;
 
 public abstract class AbstractModel {
+  private JsonObject content = null;
 
   protected abstract void addToJson(JsonObjectBuilder jsonBuilder);
   protected abstract Logger getLogger();
@@ -23,10 +24,10 @@ public abstract class AbstractModel {
   public abstract void parse(HttpServletRequest request);
 
   protected JsonObject getContent(HttpServletRequest request) {
-    if (HttpHelper.isContentJson(request)) {
+    if (content == null && HttpHelper.isContentJson(request)) {
       try (InputStream inputStream = request.getInputStream()) {
         try (JsonReader jsonReader = Json.createReader(inputStream)) {
-          return jsonReader.readObject();
+          content = jsonReader.readObject();
         } catch (JsonException je) {
           // Just warn and fall through
           getLogger().log(Level.WARNING, "Failed to parse the JSON content request body", je);
@@ -36,7 +37,7 @@ public abstract class AbstractModel {
         getLogger().log(Level.WARNING, "Failed to fetch stream of content request body", ie);
       }
     }
-    return null;
+    return content;
   }
 
   public JsonObject toJson() {

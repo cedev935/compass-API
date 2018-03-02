@@ -187,16 +187,18 @@ public class UserSession extends AbstractObject {
       // Try to fetch a connection
       try (Connection conn = SQLManager.getConnection()) {
         boolean success = false;
-
-        // Start the transaction by ceasing auto commits
         conn.setAutoCommit(false);
 
-        // Execute against the user first
-        if (mUser.addToDatabase(conn)) {
-          // Execute session insert statement (should return 1 row)
-          if (conn.prepareStatement(insertSql).executeUpdate() == 1) {
-            success = true;
+        try {
+          // Execute against the user first
+          if (mUser.addToDatabase(conn)) {
+            // Execute session insert statement (should return 1 row)
+            if (conn.prepareStatement(insertSql).executeUpdate() == 1) {
+              success = true;
+            }
           }
+        } catch (SQLException e) {
+          throw new RuntimeException("Unable to add the new user with the new session", e);
         }
 
         // Depending on the result, either commit or rollback
@@ -207,7 +209,7 @@ public class UserSession extends AbstractObject {
           conn.rollback();
         }
       } catch (SQLException e) {
-        throw new RuntimeException("Unable to add the new user with the new session", e);
+        throw new RuntimeException("Unable to transact the new user with the new session", e);
       }
     }
     return false;

@@ -1,13 +1,16 @@
 package com.gncompass.serverfront.db.model;
 
+import com.gncompass.serverfront.api.model.BorrowerEditable;
 import com.gncompass.serverfront.api.model.BorrowerViewable;
 import com.gncompass.serverfront.api.model.UserViewable;
 import com.gncompass.serverfront.db.InsertBuilder;
 import com.gncompass.serverfront.db.SelectBuilder;
 import com.gncompass.serverfront.db.SQLManager;
+import com.gncompass.serverfront.db.UpdateBuilder;
 import com.gncompass.serverfront.util.UuidHelper;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.UUID;
@@ -303,6 +306,72 @@ public class Borrower extends User {
   public boolean matches(String userReference) {
     // TODO: Should it cache the string UUID to make comparisons faster?
     return (mReferenceUuid != null && mReferenceUuid.equals(UUID.fromString(userReference)));
+  }
+
+  /**
+   * Updates this borrower information in the database. Requires that this borrower is valid with
+   * a valid reference ID
+   * @return TRUE if updated. FALSE otherwise
+   */
+  public boolean updateDatabase() {
+    if(mEmployer != null && mJobTitle != null && mPhone != null) {
+      // Build the statement
+      String updateSql = new UpdateBuilder(getTable())
+          .set(getColumn(EMPLOYER) + "=?")
+          .set(getColumn(JOB_TITLE) + "=?")
+          .set(getColumn(PHONE) + "=?")
+          .where(getColumn(ID) + "=" + mId)
+            .toString();
+
+      // Try to execute against the connection
+      try (Connection conn = SQLManager.getConnection()) {
+        boolean success = false;
+        conn.setAutoCommit(false);
+
+        try {
+          // Update the parent
+          if (updateDatabase(conn)) {
+            // Borrower specific detail statement
+            try (PreparedStatement statement = conn.prepareStatement(updateSql)) {
+              statement.setString(1, mEmployer);
+              statement.setString(2, mJobTitle);
+              statement.setString(3, mPhone);
+
+              // Update the borrower
+              if (statement.executeUpdate() == 1) {
+                success = true;
+              }
+            }
+          }
+        } catch (SQLException e) {
+          throw new RuntimeException("Unable to update the borrower info with SQL", e);
+        }
+
+        // Depending on the result, either commit or rollback
+        if (success) {
+          conn.commit();
+          return true;
+        } else {
+          conn.rollback();
+        }
+      } catch (SQLException e) {
+        throw new RuntimeException("Unable to transact the borrower info with SQL", e);
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Takes an editable borrower object received through the API and updates this class with the new
+   * information
+   * @param editable the editable data to match
+   */
+  public void updateFromEditable(BorrowerEditable editable) {
+    super.updateFromEditable(editable);
+
+    mPhone = editable.mPhone;
+    mEmployer = editable.mEmployer;
+    mJobTitle = editable.mJobTitle;
   }
 
   /*=============================================================

@@ -1,8 +1,10 @@
 package com.gncompass.serverfront.db.model;
 
+import com.gncompass.serverfront.api.model.UserEditable;
 import com.gncompass.serverfront.api.model.UserViewable;
 import com.gncompass.serverfront.db.InsertBuilder;
 import com.gncompass.serverfront.db.SelectBuilder;
+import com.gncompass.serverfront.db.UpdateBuilder;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -135,6 +137,80 @@ public abstract class User extends AbstractObject {
     return TABLE_NAME;
   }
 
+  /**
+   * Updates this user information in the database. Requires that this user is valid with
+   * a valid reference ID
+   * @return TRUE if updated. FALSE otherwise
+   * @throws SQLException on SQL failure
+   */
+  protected boolean updateDatabase(Connection conn) throws SQLException {
+    if(mName != null && mAddress1 != null && mCity != null) {
+      // Build the statement
+      String updateSql = new UpdateBuilder(getTableParent())
+          .set(getColumnParent(NAME) + "=?")
+          .set(getColumnParent(ADDRESS1) + "=?")
+          .set(getColumnParent(ADDRESS2) + (mAddress2 != null ? "=?" : "=NULL"))
+          .set(getColumnParent(ADDRESS3) + (mAddress3 != null ? "=?" : "=NULL"))
+          .set(getColumnParent(CITY) + "=?")
+          .set(getColumnParent(PROVINCE) + (mProvince != null ? "=?" : "=NULL"))
+          .set(getColumnParent(POST_CODE) + (mPostCode != null ? "=?" : "=NULL"))
+          .where(getColumnParent(ID) + "=" + mId)
+            .toString();
+
+      // Borrower specific detail statement
+      try (PreparedStatement statement = conn.prepareStatement(updateSql)) {
+        int paramIndex = 1;
+        statement.setString(paramIndex++, mName);
+        statement.setString(paramIndex++, mAddress1);
+        if (mAddress2 != null) {
+          statement.setString(paramIndex++, mAddress2);
+        }
+        if (mAddress3 != null) {
+          statement.setString(paramIndex++, mAddress3);
+        }
+        statement.setString(paramIndex++, mCity);
+        if (mProvince != null) {
+          statement.setString(paramIndex++, mProvince);
+        }
+        if (mPostCode != null) {
+          statement.setString(paramIndex++, mPostCode);
+        }
+
+        // Update the user
+        return (statement.executeUpdate() == 1);
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Takes an editable user object received through the API and updates this class with the new
+   * information
+   * @param editable the editable data to match
+   */
+  protected void updateFromEditable(UserEditable editable) {
+    mAddress1 = editable.mAddress1;
+    mAddress2 = editable.mAddress2;
+    mAddress3 = editable.mAddress3;
+    mCity = editable.mCity;
+    mName = editable.mName;
+    mPostCode = editable.mPostCode;
+    mProvince = editable.mProvince;
+  }
+
+  /**
+   * Updates the viewable data set with the user data available in this parent
+   * @param viewable the viewable data set
+   */
+  protected void updateViewable(UserViewable viewable) {
+    // Fetch the country code
+    Country country = new Country().getCountry(mCountryId);
+
+    // Set the data
+    viewable.setUserData(mName, mAddress1, mAddress2, mAddress3,
+                            mCity, mProvince, mPostCode, country != null ? country.mCode : null);
+  }
+
   /*=============================================================
    * PACKAGE-PRIVATE FUNCTIONS
    *============================================================*/
@@ -239,18 +315,5 @@ public abstract class User extends AbstractObject {
    */
   public boolean matches(UserType type, String userReference) {
     return (getUserType() == type && matches(userReference));
-  }
-
-  /**
-   * Updates the viewable data set with the user data available in this parent
-   * @param viewable the viewable data set
-   */
-  public void updateViewable(UserViewable viewable) {
-    // Fetch the country code
-    Country country = new Country().getCountry(mCountryId);
-
-    // Set the data
-    viewable.setUserData(mName, mAddress1, mAddress2, mAddress3,
-                            mCity, mProvince, mPostCode, country != null ? country.mCode : null);
   }
 }

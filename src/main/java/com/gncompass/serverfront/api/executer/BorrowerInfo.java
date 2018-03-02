@@ -24,8 +24,8 @@ public class BorrowerInfo extends AbstractExecuter {
     // Fetch the borrower
     Borrower borrower = new Borrower().getBorrower(mBorrowerUuid);
     if (borrower != null) {
-        HttpHelper.setResponseSuccess(response, HttpServletResponse.SC_OK,
-                                      borrower.getViewable().toJson());
+      HttpHelper.setResponseSuccess(response, HttpServletResponse.SC_OK,
+                                    borrower.getViewable().toJson());
     } else {
       // This is a server error. Should never fail since this user was authenticated
       HttpHelper.setResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,

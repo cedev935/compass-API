@@ -1,6 +1,7 @@
 package com.gncompass.serverfront.api.executer;
 
 import com.gncompass.serverfront.api.model.BorrowerEditable;
+import com.gncompass.serverfront.db.model.Borrower;
 import com.gncompass.serverfront.util.HttpHelper;
 import com.gncompass.serverfront.util.StringHelper;
 
@@ -23,13 +24,32 @@ public class BorrowerUpdate extends AbstractExecuter {
 
   @Override
   protected void execute(HttpServletResponse response) throws ServletException, IOException {
-    // TODO! Implement
-    JsonObject jsonResponse = Json.createObjectBuilder()
-        .add("code", 4)
-        .add("type", "ok")
-        .add("message", "magic!")
-        .build();
-    HttpHelper.setResponseSuccess(response, jsonResponse);
+    boolean next = false;
+
+    // Fetch the borrower
+    Borrower borrower = new Borrower().getBorrower(mBorrowerUuid);
+    if (borrower != null) {
+      next = true;
+    } else {
+      // This is a server error. Should never fail since this user was authenticated
+      HttpHelper.setResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+          1301, "The borrower information failed to be fetched from the repository");
+    }
+
+    // Update the borrower information
+    if (next) {
+      // Fetch from input
+      borrower.updateFromEditable(mBorrowerEditable);
+
+      // Update database
+      if(borrower.updateDatabase()) {
+        HttpHelper.setResponseSuccess(response, HttpServletResponse.SC_OK,
+                                      borrower.getViewable().toJson());
+      } else {
+        HttpHelper.setResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+            1302, "The borrower failed to be updated to the new information");
+      }
+    }
   }
 
   @Override

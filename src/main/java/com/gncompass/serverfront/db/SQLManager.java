@@ -45,7 +45,7 @@ public class SQLManager {
   public static Connection getConnection(boolean useConnectionPool) throws SQLException {
     // Direct JDBC connection
     if (!useConnectionPool) {
-      return DriverManager.getConnection(sDataSourceAddress);
+      return resetAutoCommit(DriverManager.getConnection(sDataSourceAddress));
     }
 
     // Pooled connection
@@ -70,7 +70,7 @@ public class SQLManager {
         }
       }
 
-      return sDataSource.getConnection();
+      return resetAutoCommit(sDataSource.getConnection());
     } // synchronized dataSourceLock
   }
 
@@ -102,5 +102,20 @@ public class SQLManager {
     synchronized (sDataSourceLock) {
       sDataSourceAddress = StateHelper.getProperty("cloudsql", "cloudsql-local");
     }
+  }
+
+  /**
+   * Reset the auto commit back to true. Required since on occasion auto commit is disabled by
+   * instance usages
+   * @param conn the Connection to update
+   * @return the Connection reference
+   */
+  private static Connection resetAutoCommit(Connection conn) {
+    try {
+      conn.setAutoCommit(true);
+    } catch (SQLException se) {
+      // Ignore
+    }
+    return conn;
   }
 }
