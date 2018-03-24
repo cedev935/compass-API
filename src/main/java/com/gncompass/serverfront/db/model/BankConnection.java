@@ -1,5 +1,6 @@
 package com.gncompass.serverfront.db.model;
 
+import com.gncompass.serverfront.api.model.BankInfo;
 import com.gncompass.serverfront.api.model.BankSummary;
 import com.gncompass.serverfront.db.SelectBuilder;
 import com.gncompass.serverfront.db.SQLManager;
@@ -37,6 +38,7 @@ public class BankConnection extends AbstractObject {
   public int mAccount = 0;
 
   // Internals
+  public UUID mLoginUuid = null;
   public UUID mReferenceUuid = null;
 
   public BankConnection() {
@@ -52,12 +54,16 @@ public class BankConnection extends AbstractObject {
 
    /**
     * Build the select SQL for all properties related to the bank connection
-    * @param userId the user ID
+    * @param user the user reference
+    * @param reference the bank connection UUID reference
     * @return the SelectBuilder reference object
     */
-   private SelectBuilder buildSelectSql(long userId) {
+   private SelectBuilder buildSelectSql(User user, String reference) {
      SelectBuilder selectBuilder = buildSelectSql()
-         .where(getColumn(USER_ID) + "=" + Long.toString(userId));
+         .where(getColumn(USER_ID) + "=" + Long.toString(user.mId));
+     if (reference != null) {
+       selectBuilder.where(getColumn(REFERENCE) + "=" + UuidHelper.getHexFromUUID(reference, true));
+     }
      return selectBuilder;
    }
 
@@ -97,12 +103,21 @@ public class BankConnection extends AbstractObject {
     mTransit = resultSet.getInt(getColumn(TRANSIT));
     mAccount = resultSet.getInt(getColumn(ACCOUNT));
 
+    mLoginUuid = UuidHelper.getUUIDFromBytes(mLoginId);
     mReferenceUuid = UuidHelper.getUUIDFromBytes(mReference);
   }
 
   /*=============================================================
    * PUBLIC FUNCTIONS
    *============================================================*/
+
+  /**
+   * Returns the API model for the bank info object
+   * @return the API mode for the bank info
+   */
+  public BankInfo getApiInfo() {
+    return new BankInfo(mLoginUuid.toString(), mInstitution, mTransit, mAccount);
+  }
 
   /**
    * Returns the API model for the bank summary information
@@ -112,7 +127,32 @@ public class BankConnection extends AbstractObject {
     return new BankSummary(mReferenceUuid.toString(), mInstitution);
   }
 
-  /*
+  /**
+   * Fetches the bank connection information from the database
+   * @param user the user object to fetch for
+   * @param reference the reference UUID to the bank connection
+   * @return the bank connection object with the information fetched. If not found, return NULL
+   */
+  public BankConnection getBankConnection(User user, String reference) {
+    // Build the query
+    String selectSql = buildSelectSql(user, reference).toString();
+
+    // Try to execute against the connection
+    try (Connection conn = SQLManager.getConnection()) {
+      try (ResultSet rs = conn.prepareStatement(selectSql).executeQuery()) {
+        if (rs.next()) {
+          updateFromFetch(rs);
+          return this;
+        }
+      }
+    } catch (SQLException e) {
+      throw new RuntimeException("Unable to fetch the bank connection reference with SQL", e);
+    }
+
+    return null;
+  }
+
+  /**
    * Returns the table name of the class
    * @return the object table name
    */
@@ -134,7 +174,7 @@ public class BankConnection extends AbstractObject {
     List<BankConnection> bankConnections = new ArrayList<>();
 
     // Build the query
-    String selectSql = new BankConnection().buildSelectSql(user.mId).toString();
+    String selectSql = new BankConnection().buildSelectSql(user, null).toString();
 
     // Try to execute against the connection
     try (Connection conn = SQLManager.getConnection()) {

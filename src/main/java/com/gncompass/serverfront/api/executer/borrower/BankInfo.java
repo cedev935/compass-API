@@ -1,6 +1,8 @@
 package com.gncompass.serverfront.api.executer.borrower;
 
 import com.gncompass.serverfront.api.executer.AbstractExecuter;
+import com.gncompass.serverfront.db.model.BankConnection;
+import com.gncompass.serverfront.db.model.Borrower;
 import com.gncompass.serverfront.util.HttpHelper;
 import com.gncompass.serverfront.util.StringHelper;
 
@@ -23,13 +25,30 @@ public class BankInfo extends AbstractExecuter {
 
   @Override
   protected void execute(HttpServletResponse response) throws ServletException, IOException {
-    // TODO! Implement
-    JsonObject jsonResponse = Json.createObjectBuilder()
-        .add("code", 4)
-        .add("type", "ok")
-        .add("message", "magic!")
-        .build();
-    HttpHelper.setResponseSuccess(response, jsonResponse);
+    boolean next = false;
+
+    // Fetch the borrower
+    Borrower borrower = new Borrower().getBorrower(mBorrowerUuid);
+    if (borrower != null) {
+      next = true;
+    } else {
+      // This is a server error. Should never fail since this user was authenticated
+      HttpHelper.setResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+          2101, "The borrower information failed to be fetched from the repository");
+    }
+
+    // Fetch the bank connection
+    if (next) {
+      BankConnection bankConnection = new BankConnection().getBankConnection(borrower, mBankUuid);
+      if (bankConnection != null) {
+          HttpHelper.setResponseSuccess(response, HttpServletResponse.SC_OK,
+                                        bankConnection.getApiInfo().toJson());
+      } else {
+        // Bank connection not found error
+        HttpHelper.setResponseError(response, HttpServletResponse.SC_NOT_FOUND,
+            2102, "The bank for this borrower could not be found");
+      }
+    }
   }
 
   @Override
