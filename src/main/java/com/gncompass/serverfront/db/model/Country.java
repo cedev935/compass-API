@@ -174,9 +174,8 @@ public class Country extends AbstractObject {
   }
 
   /**
-   * Fetches the borrower information from the database
-   * @param reference the reference UUID to the borrower
-   * @return the Borrower class object with the information fetched. If not found, return NULL
+   * Fetches all countries available for creating accounts
+   * @return the stack of countries available. Empty list if none found
    */
   public static List<Country> getAvailable() {
     List<Country> countries = new ArrayList<>();
