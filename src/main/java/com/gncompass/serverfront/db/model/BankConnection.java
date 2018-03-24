@@ -62,35 +62,35 @@ public class BankConnection extends AbstractObject {
    * PRIVATE FUNCTIONS
    *============================================================*/
 
-   /**
-    * Build the select SQL for all properties related to the bank connection
-    * @param user the user reference
-    * @param reference the bank connection UUID reference
-    * @return the SelectBuilder reference object
-    */
-   private SelectBuilder buildSelectSql(User user, String reference) {
-     SelectBuilder selectBuilder = buildSelectSql()
-         .where(getColumn(USER_ID) + "=" + Long.toString(user.mId));
-     if (reference != null) {
-       selectBuilder.where(getColumn(REFERENCE) + "=" + UuidHelper.getHexFromUUID(reference, true));
-     }
-     return selectBuilder;
-   }
+  /**
+   * Build the select SQL for all properties related to the bank connection
+   * @param user the user reference
+   * @param reference the bank connection UUID reference
+   * @return the SelectBuilder reference object
+   */
+  private SelectBuilder buildSelectSql(User user, String reference) {
+    SelectBuilder selectBuilder = buildSelectSql()
+        .where(getColumn(USER_ID) + "=" + Long.toString(user.mId));
+    if (reference != null) {
+      selectBuilder.where(getColumn(REFERENCE) + "=" + UuidHelper.getHexFromUUID(reference, true));
+    }
+    return selectBuilder;
+  }
 
-   /**
-    * Build the select SQL for all properties related to all bank connections
-    * @return the SelectBuilder reference object
-    */
-   private SelectBuilder buildSelectSql() {
-     return new SelectBuilder(getTable())
-         .column(getColumn(ID))
-         .column(getColumn(REFERENCE))
-         .column(getColumn(LOGIN_ID))
-         .column(getColumn(ENABLED))
-         .column(getColumn(INSTITUTION))
-         .column(getColumn(TRANSIT))
-         .column(getColumn(ACCOUNT));
-   }
+  /**
+   * Build the select SQL for all properties related to all bank connections
+   * @return the SelectBuilder reference object
+   */
+  private SelectBuilder buildSelectSql() {
+    return new SelectBuilder(getTable())
+        .column(getColumn(ID))
+        .column(getColumn(REFERENCE))
+        .column(getColumn(LOGIN_ID))
+        .column(getColumn(ENABLED))
+        .column(getColumn(INSTITUTION))
+        .column(getColumn(TRANSIT))
+        .column(getColumn(ACCOUNT));
+  }
 
   /*=============================================================
    * PROTECTED FUNCTIONS
@@ -223,7 +223,7 @@ public class BankConnection extends AbstractObject {
       }
     } catch (SQLException e) {
       throw new RuntimeException(
-                        "Unable to fetch the list of banks for the borrower with SQL", e);
+                        "Unable to fetch the list of banks for the user with SQL", e);
     }
 
     return bankConnections;
