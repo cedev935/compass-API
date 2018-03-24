@@ -1,5 +1,6 @@
-package com.gncompass.serverfront.api.executer;
+package com.gncompass.serverfront.api.executer.borrower;
 
+import com.gncompass.serverfront.api.executer.AbstractExecuter;
 import com.gncompass.serverfront.util.HttpHelper;
 import com.gncompass.serverfront.util.StringHelper;
 
@@ -11,11 +12,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.ServletException;
 
-public class BorrowerAssessmentInfo extends AbstractExecuter {
+public class AssessmentInfo extends AbstractExecuter {
   private String mAssessmentUuid = null;
   private String mBorrowerUuid = null;
 
-  public BorrowerAssessmentInfo(String borrowerUuid, String assessmentUuid) {
+  public AssessmentInfo(String borrowerUuid, String assessmentUuid) {
     mAssessmentUuid = assessmentUuid;
     mBorrowerUuid = borrowerUuid;
   }

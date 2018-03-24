@@ -1,5 +1,6 @@
-package com.gncompass.serverfront.api.executer;
+package com.gncompass.serverfront.api.executer.borrower;
 
+import com.gncompass.serverfront.api.executer.AbstractExecuter;
 import com.gncompass.serverfront.util.HttpHelper;
 import com.gncompass.serverfront.util.StringHelper;
 
@@ -11,11 +12,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.ServletException;
 
-public class UploadedAssessFile extends AbstractExecuter {
-  private String mAssessmentUuid = null;
+public class BankList extends AbstractExecuter {
+  private String mBorrowerUuid = null;
 
-  public UploadedAssessFile(String assessmentUuid) {
-    mAssessmentUuid = assessmentUuid;
+  public BankList(String borrowerUuid) {
+    mBorrowerUuid = borrowerUuid;
   }
 
   @Override
@@ -31,16 +32,16 @@ public class UploadedAssessFile extends AbstractExecuter {
 
   @Override
   protected int getInvalidErrorCode() {
-    return 10000;
+    return 2200;
   }
 
   @Override
   protected String getInvalidErrorString() {
-    return "Invalid input for informing of an uploaded assessment file";
+    return "Invalid input for fetching all banks";
   }
 
   @Override
   protected boolean validate(HttpServletRequest request) {
-    return (mAssessmentUuid != null && StringHelper.isUuid(mAssessmentUuid));
+    return (mBorrowerUuid != null && StringHelper.isUuid(mBorrowerUuid));
   }
 }

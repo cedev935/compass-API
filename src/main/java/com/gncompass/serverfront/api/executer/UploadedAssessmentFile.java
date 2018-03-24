@@ -11,13 +11,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.ServletException;
 
-public class BorrowerBankInfo extends AbstractExecuter {
-  private String mBankUuid = null;
-  private String mBorrowerUuid = null;
+public class UploadedAssessmentFile extends AbstractExecuter {
+  private String mAssessmentUuid = null;
 
-  public BorrowerBankInfo(String borrowerUuid, String bankUuid) {
-    mBankUuid = bankUuid;
-    mBorrowerUuid = borrowerUuid;
+  public UploadedAssessmentFile(String assessmentUuid) {
+    mAssessmentUuid = assessmentUuid;
   }
 
   @Override
@@ -33,17 +31,16 @@ public class BorrowerBankInfo extends AbstractExecuter {
 
   @Override
   protected int getInvalidErrorCode() {
-    return 2100;
+    return 10000;
   }
 
   @Override
   protected String getInvalidErrorString() {
-    return "Invalid input for fetching info on a bank";
+    return "Invalid input for informing of an uploaded assessment file";
   }
 
   @Override
   protected boolean validate(HttpServletRequest request) {
-    return (mBankUuid != null && StringHelper.isUuid(mBankUuid)
-            && mBorrowerUuid != null && StringHelper.isUuid(mBorrowerUuid));
+    return (mAssessmentUuid != null && StringHelper.isUuid(mAssessmentUuid));
   }
 }

@@ -1,5 +1,6 @@
-package com.gncompass.serverfront.api.executer;
+package com.gncompass.serverfront.api.executer.borrower;
 
+import com.gncompass.serverfront.api.executer.AbstractExecuter;
 import com.gncompass.serverfront.util.HttpHelper;
 import com.gncompass.serverfront.util.StringHelper;
 
@@ -11,10 +12,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.ServletException;
 
-public class BorrowerBankCreate extends AbstractExecuter {
+public class AssessmentList extends AbstractExecuter {
   private String mBorrowerUuid = null;
 
-  public BorrowerBankCreate(String borrowerUuid) {
+  public AssessmentList(String borrowerUuid) {
     mBorrowerUuid = borrowerUuid;
   }
 
@@ -26,17 +27,17 @@ public class BorrowerBankCreate extends AbstractExecuter {
         .add("type", "ok")
         .add("message", "magic!")
         .build();
-    HttpHelper.setResponseSuccess(response, HttpServletResponse.SC_CREATED, jsonResponse);
+    HttpHelper.setResponseSuccess(response, jsonResponse);
   }
 
   @Override
   protected int getInvalidErrorCode() {
-    return 2000;
+    return 1800;
   }
 
   @Override
   protected String getInvalidErrorString() {
-    return "Invalid input for creating a bank";
+    return "Invalid input for fetching all assessments";
   }
 
   @Override

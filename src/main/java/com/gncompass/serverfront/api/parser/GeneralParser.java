@@ -2,7 +2,7 @@ package com.gncompass.serverfront.api.parser;
 
 import com.gncompass.serverfront.api.executer.AbstractExecuter;
 import com.gncompass.serverfront.api.executer.CountriesGet;
-import com.gncompass.serverfront.api.executer.UploadedAssessFile;
+import com.gncompass.serverfront.api.executer.UploadedAssessmentFile;
 import com.gncompass.serverfront.util.HttpHelper.RequestType;
 
 import java.io.IOException;
@@ -35,7 +35,7 @@ public abstract class GeneralParser {
         if (pathChunks.size() == 2) {
           if (pathChunks.get(0).equals(TYPE_ASSESSMENTS)) {
             if (type == RequestType.POST) {
-              executer = new UploadedAssessFile(pathChunks.get(1));
+              executer = new UploadedAssessmentFile(pathChunks.get(1));
             }
           }
         }

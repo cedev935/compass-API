@@ -1,5 +1,6 @@
-package com.gncompass.serverfront.api.executer;
+package com.gncompass.serverfront.api.executer.borrower;
 
+import com.gncompass.serverfront.api.executer.AbstractExecuter;
 import com.gncompass.serverfront.api.model.BorrowerEditable;
 import com.gncompass.serverfront.db.model.Borrower;
 import com.gncompass.serverfront.util.HttpHelper;

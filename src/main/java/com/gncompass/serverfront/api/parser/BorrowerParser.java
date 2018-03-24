@@ -1,19 +1,19 @@
 package com.gncompass.serverfront.api.parser;
 
 import com.gncompass.serverfront.api.executer.AbstractExecuter;
-import com.gncompass.serverfront.api.executer.BorrowerAssessmentCreate;
-import com.gncompass.serverfront.api.executer.BorrowerAssessmentFile;
-import com.gncompass.serverfront.api.executer.BorrowerAssessmentInfo;
-import com.gncompass.serverfront.api.executer.BorrowerAssessments;
-import com.gncompass.serverfront.api.executer.BorrowerAssessmentSubmit;
-import com.gncompass.serverfront.api.executer.BorrowerBankCreate;
-import com.gncompass.serverfront.api.executer.BorrowerBankInfo;
-import com.gncompass.serverfront.api.executer.BorrowerBanks;
-import com.gncompass.serverfront.api.executer.BorrowerCreate;
-import com.gncompass.serverfront.api.executer.BorrowerInfo;
-import com.gncompass.serverfront.api.executer.BorrowerLogin;
-import com.gncompass.serverfront.api.executer.BorrowerLogout;
-import com.gncompass.serverfront.api.executer.BorrowerUpdate;
+import com.gncompass.serverfront.api.executer.borrower.AssessmentCreate;
+import com.gncompass.serverfront.api.executer.borrower.AssessmentFile;
+import com.gncompass.serverfront.api.executer.borrower.AssessmentInfo;
+import com.gncompass.serverfront.api.executer.borrower.AssessmentList;
+import com.gncompass.serverfront.api.executer.borrower.AssessmentSubmit;
+import com.gncompass.serverfront.api.executer.borrower.BankCreate;
+import com.gncompass.serverfront.api.executer.borrower.BankInfo;
+import com.gncompass.serverfront.api.executer.borrower.BankList;
+import com.gncompass.serverfront.api.executer.borrower.BorrowerCreate;
+import com.gncompass.serverfront.api.executer.borrower.BorrowerInfo;
+import com.gncompass.serverfront.api.executer.borrower.BorrowerLogin;
+import com.gncompass.serverfront.api.executer.borrower.BorrowerLogout;
+import com.gncompass.serverfront.api.executer.borrower.BorrowerUpdate;
 import com.gncompass.serverfront.util.HttpHelper.RequestType;
 
 import java.io.IOException;
@@ -123,9 +123,9 @@ public abstract class BorrowerParser {
     // Level 1: /assessments
     if (pathChunks.size() == 0) {
       if (type == RequestType.GET) {
-        executer = new BorrowerAssessments(borrowerUuid);
+        executer = new AssessmentList(borrowerUuid);
       } else if (type == RequestType.POST) {
-        executer = new BorrowerAssessmentCreate(borrowerUuid);
+        executer = new AssessmentCreate(borrowerUuid);
       }
     } else {
       nextLevel = true;
@@ -139,9 +139,9 @@ public abstract class BorrowerParser {
 
       if (pathChunks.size() == 0) {
         if (type == RequestType.GET) {
-          executer = new BorrowerAssessmentInfo(borrowerUuid, assessmentUuid);
+          executer = new AssessmentInfo(borrowerUuid, assessmentUuid);
         } else if (type == RequestType.POST) {
-          executer = new BorrowerAssessmentSubmit(borrowerUuid, assessmentUuid);
+          executer = new AssessmentSubmit(borrowerUuid, assessmentUuid);
         }
       } else {
         nextLevel = true;
@@ -154,7 +154,7 @@ public abstract class BorrowerParser {
       String assessmentFile = pathChunks.remove(0);
 
       if (pathChunks.size() == 0 && type == RequestType.GET) {
-        executer = new BorrowerAssessmentFile(borrowerUuid, assessmentUuid, assessmentFile);
+        executer = new AssessmentFile(borrowerUuid, assessmentUuid, assessmentFile);
       }
     }
 
@@ -179,9 +179,9 @@ public abstract class BorrowerParser {
     // Level 1: /banks
     if (pathChunks.size() == 0) {
       if (type == RequestType.GET) {
-        executer = new BorrowerBanks(borrowerUuid);
+        executer = new BankList(borrowerUuid);
       } else if (type == RequestType.POST) {
-        executer = new BorrowerBankCreate(borrowerUuid);
+        executer = new BankCreate(borrowerUuid);
       }
     } else {
       nextLevel = true;
@@ -195,7 +195,7 @@ public abstract class BorrowerParser {
 
       if (pathChunks.size() == 0) {
         if (type == RequestType.GET) {
-          executer = new BorrowerBankInfo(borrowerUuid, bankUuid);
+          executer = new BankInfo(borrowerUuid, bankUuid);
         }
       }
     }
