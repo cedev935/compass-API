@@ -2,6 +2,7 @@ package com.gncompass.serverfront.db.model;
 
 import com.gncompass.serverfront.api.model.BankInfo;
 import com.gncompass.serverfront.api.model.BankSummary;
+import com.gncompass.serverfront.db.InsertBuilder;
 import com.gncompass.serverfront.db.SelectBuilder;
 import com.gncompass.serverfront.db.SQLManager;
 import com.gncompass.serverfront.util.UuidHelper;
@@ -42,6 +43,15 @@ public class BankConnection extends AbstractObject {
   public UUID mReferenceUuid = null;
 
   public BankConnection() {
+  }
+
+  public BankConnection(BankInfo bankInfo) {
+    mAccount = bankInfo.mAccount;
+    mInstitution = bankInfo.mInstitution;
+    mLoginUuid = UUID.fromString(bankInfo.mLoginId);
+    mTransit = bankInfo.mTransit;
+
+    mReferenceUuid = UUID.randomUUID();
   }
 
   public BankConnection(ResultSet rs) throws SQLException {
@@ -110,6 +120,34 @@ public class BankConnection extends AbstractObject {
   /*=============================================================
    * PUBLIC FUNCTIONS
    *============================================================*/
+
+  /**
+    * Adds the bank connection to the database
+    * @param user the user that will own this bank connection
+    * @return TRUE if successfully added. FALSE otherwise
+    */
+  public boolean addToDatabase(User user) {
+    if (mAccount > 0 && mInstitution > 0 && mLoginUuid != null && mReferenceUuid != null
+        && mTransit > 0 && user != null) {
+      // Create the bank connection insert statement
+      String insertSql = new InsertBuilder(getTable())
+          .set(REFERENCE, UuidHelper.getHexFromUUID(mReferenceUuid, true))
+          .set(USER_ID, Long.toString(user.mId))
+          .set(LOGIN_ID, UuidHelper.getHexFromUUID(mLoginUuid, true))
+          .set(INSTITUTION, Integer.toString(mInstitution))
+          .set(TRANSIT, Integer.toString(mTransit))
+          .set(ACCOUNT, Integer.toString(mAccount))
+          .toString();
+
+      // Execute the insert
+      try (Connection conn = SQLManager.getConnection()) {
+        return (conn.prepareStatement(insertSql).executeUpdate() == 1);
+      } catch (SQLException e) {
+        throw new RuntimeException("Unable to add the bank connection for an existing user", e);
+      }
+    }
+    return false;
+  }
 
   /**
    * Returns the API model for the bank info object

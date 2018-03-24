@@ -1,6 +1,9 @@
 package com.gncompass.serverfront.api.executer.borrower;
 
+import com.gncompass.serverfront.api.model.BankInfo;
 import com.gncompass.serverfront.api.executer.AbstractExecuter;
+import com.gncompass.serverfront.db.model.BankConnection;
+import com.gncompass.serverfront.db.model.Borrower;
 import com.gncompass.serverfront.util.HttpHelper;
 import com.gncompass.serverfront.util.StringHelper;
 
@@ -12,22 +15,45 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.ServletException;
 
+// TODO:
+//   [1] The bank create should make sure there is no existing institution, transit, account for
+//       a single user already. Return 409 if there is (maybe return the reference?)
+
 public class BankCreate extends AbstractExecuter {
+  private BankInfo mBankRequest = null;
   private String mBorrowerUuid = null;
 
   public BankCreate(String borrowerUuid) {
+    mBankRequest = new BankInfo();
     mBorrowerUuid = borrowerUuid;
   }
 
   @Override
   protected void execute(HttpServletResponse response) throws ServletException, IOException {
-    // TODO! Implement
-    JsonObject jsonResponse = Json.createObjectBuilder()
-        .add("code", 4)
-        .add("type", "ok")
-        .add("message", "magic!")
-        .build();
-    HttpHelper.setResponseSuccess(response, HttpServletResponse.SC_CREATED, jsonResponse);
+    boolean next = false;
+
+    // Fetch the borrower
+    Borrower borrower = new Borrower().getBorrower(mBorrowerUuid);
+    if (borrower != null) {
+      next = true;
+    } else {
+      // This is a server error. Should never fail since this user was authenticated
+      HttpHelper.setResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+          2001, "The borrower information failed to be fetched from the repository");
+    }
+
+    // Create the bank connection
+    if (next) {
+      BankConnection bankConnection = new BankConnection(mBankRequest);
+      if (bankConnection.addToDatabase(borrower)) {
+        // Created
+        HttpHelper.setResponseSuccess(response, HttpServletResponse.SC_CREATED, null);
+      } else {
+        // Failed to create
+        HttpHelper.setResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+            2002, "The bank connection failed to be created for the selected borrower");
+      }
+    }
   }
 
   @Override
@@ -42,6 +68,7 @@ public class BankCreate extends AbstractExecuter {
 
   @Override
   protected boolean validate(HttpServletRequest request) {
-    return (mBorrowerUuid != null && StringHelper.isUuid(mBorrowerUuid));
+    mBankRequest.parse(request);
+    return (mBorrowerUuid != null && StringHelper.isUuid(mBorrowerUuid) && mBankRequest.isValid());
   }
 }
