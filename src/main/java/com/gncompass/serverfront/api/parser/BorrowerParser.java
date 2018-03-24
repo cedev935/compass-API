@@ -6,6 +6,9 @@ import com.gncompass.serverfront.api.executer.BorrowerAssessmentFile;
 import com.gncompass.serverfront.api.executer.BorrowerAssessmentInfo;
 import com.gncompass.serverfront.api.executer.BorrowerAssessments;
 import com.gncompass.serverfront.api.executer.BorrowerAssessmentSubmit;
+import com.gncompass.serverfront.api.executer.BorrowerBankCreate;
+import com.gncompass.serverfront.api.executer.BorrowerBankInfo;
+import com.gncompass.serverfront.api.executer.BorrowerBanks;
 import com.gncompass.serverfront.api.executer.BorrowerCreate;
 import com.gncompass.serverfront.api.executer.BorrowerInfo;
 import com.gncompass.serverfront.api.executer.BorrowerLogin;
@@ -170,7 +173,33 @@ public abstract class BorrowerParser {
                                                        List<String> pathChunks,
                                                        RequestType type,
                                                        HttpServletRequest request) {
-    // TODO!
-    return null;
+    AbstractExecuter executer = null;
+    boolean nextLevel = false;
+
+    // Level 1: /banks
+    if (pathChunks.size() == 0) {
+      if (type == RequestType.GET) {
+        executer = new BorrowerBanks(borrowerUuid);
+      } else if (type == RequestType.POST) {
+        executer = new BorrowerBankCreate(borrowerUuid);
+      }
+    } else {
+      nextLevel = true;
+    }
+
+    // Level 2: /banks/{bankUuid}
+    String bankUuid = null;
+    if (nextLevel) {
+      nextLevel = false;
+      bankUuid = pathChunks.remove(0);
+
+      if (pathChunks.size() == 0) {
+        if (type == RequestType.GET) {
+          executer = new BorrowerBankInfo(borrowerUuid, bankUuid);
+        }
+      }
+    }
+
+    return executer;
   }
 }
