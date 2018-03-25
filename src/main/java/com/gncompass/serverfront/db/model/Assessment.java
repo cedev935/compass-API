@@ -1,5 +1,6 @@
 package com.gncompass.serverfront.db.model;
 
+import com.gncompass.serverfront.api.model.AssessmentInfo;
 import com.gncompass.serverfront.api.model.AssessmentSummary;
 import com.gncompass.serverfront.db.SelectBuilder;
 import com.gncompass.serverfront.db.SQLManager;
@@ -35,6 +36,7 @@ public class Assessment extends AbstractObject {
   public int mRatingId = 0;
 
   // Internals
+  private List<AssessmentFile> mAssessmentFiles = new ArrayList<>();
   public UUID mReferenceUuid = null;
 
   public Assessment() {
@@ -105,11 +107,57 @@ public class Assessment extends AbstractObject {
    *============================================================*/
 
   /**
+   * Returns the API model for the assessment info object
+   * @return the API mode for the assessment info
+   */
+  public AssessmentInfo getApiInfo() {
+    // TODO: Fetch upload path!
+    AssessmentInfo info = new AssessmentInfo(
+                                    mRegisteredTime, mUpdatedTime, mStatusId, mRatingId,
+                                    "http://fakedomain.com/testpath");
+    for (AssessmentFile file : mAssessmentFiles) {
+      info.addFile(file.getApiModel());
+    }
+    return info;
+  }
+
+  /**
    * Returns the API model for the assessment summary information
    * @return the API model for a assessment summary
    */
   public AssessmentSummary getApiSummary() {
     return new AssessmentSummary(mReferenceUuid.toString(), mUpdatedTime, mStatusId, mRatingId);
+  }
+
+  /**
+   * Fetches the assessment information from the database
+   * @param borrower the borrower object to fetch for
+   * @param reference the reference UUID to the assessment
+   * @return the assessment object with the information fetched. If not found, return NULL
+   */
+  public Assessment getAssessment(Borrower borrower, String reference) {
+    // Build the query
+    String selectSql = buildSelectSql(borrower, reference).toString();
+
+    // Try to execute against the connection
+    try (Connection conn = SQLManager.getConnection()) {
+      try (ResultSet rs = conn.prepareStatement(selectSql).executeQuery()) {
+        if (rs.next()) {
+          // Update core data
+          updateFromFetch(rs);
+
+          // Attempt to fetch the files
+          mAssessmentFiles.clear();
+          mAssessmentFiles.addAll(AssessmentFile.getAllForAssessment(conn, this));
+
+          return this;
+        }
+      }
+    } catch (SQLException e) {
+      throw new RuntimeException("Unable to fetch the assessment reference with SQL", e);
+    }
+
+    return null;
   }
 
   /**

@@ -10,6 +10,7 @@ import java.util.logging.Logger;
 
 import javax.json.Json;
 import javax.json.JsonException;
+import javax.json.JsonNumber;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonReader;
@@ -38,6 +39,18 @@ public abstract class AbstractModel {
       }
     }
     return content;
+  }
+
+  protected long getLongFromJson(JsonObject json, String key, long defaultValue) {
+    try {
+      JsonNumber jsonValue = json.getJsonNumber(key);
+      if (jsonValue != null) {
+        return jsonValue.longValue();
+      }
+    } catch (ClassCastException cce) {
+      // Ignore and fall through
+    }
+    return defaultValue;
   }
 
   public JsonObject toJson() {

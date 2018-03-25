@@ -56,7 +56,7 @@ public class AssessmentSummary extends AbstractModel {
     JsonObject jsonObject = getContent(request);
     if(jsonObject != null) {
       mReference = jsonObject.getString(KEY_REFERENCE, null);
-      mDateTime = jsonObject.getJsonNumber(KEY_DATE).longValue();
+      mDateTime = getLongFromJson(jsonObject, KEY_DATE, 0L);
       mStatusId = jsonObject.getInt(KEY_STATUS, 0);
       mRatingId = jsonObject.getInt(KEY_RATING, 0);
     }
