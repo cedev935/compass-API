@@ -81,6 +81,23 @@ public class Assessment extends AbstractObject {
    *============================================================*/
 
   /**
+   * Adds a join of this table for the indicated borrower and tied to the id column for the on
+   * statement. Internal version
+   * @param selectBuilder the select builder to add to
+   * @param idColumn the id column of the select statement to join with
+   * @param reference the assessment reference UUID
+   * @param borrower the borrower of the join
+   * @return the select builder result
+   */
+  private SelectBuilder addJoinInternal(SelectBuilder selectBuilder, String idColumn,
+                                        String reference, Borrower borrower) {
+    String joinOn = getColumn(ID) + "=" + idColumn + " AND "
+                  + getColumn(BORROWER) + "=" + Long.toString(borrower.mId) + " AND "
+                  + getColumn(REFERENCE) + "=" + UuidHelper.getHexFromUUID(reference, true);
+    return selectBuilder.join(getTable(), joinOn);
+  }
+
+  /**
    * Build the select SQL for all properties related to the assessment
    * @param borrower the borrower reference
    * @param reference the bank connection UUID reference
@@ -289,6 +306,20 @@ public class Assessment extends AbstractObject {
   /*=============================================================
    * STATIC FUNCTIONS
    *============================================================*/
+
+  /**
+   * Adds a join of this table for the indicated borrower and tied to the id column for the on
+   * statement. Package private version (exposed)
+   * @param selectBuilder the select builder to add to
+   * @param idColumn the id column of the select statement to join with
+   * @param reference the assessment reference UUID
+   * @param borrower the borrower of the join
+   * @return the select builder result
+   */
+  static SelectBuilder addJoin(SelectBuilder selectBuilder, String idColumn, String reference,
+                               Borrower borrower) {
+    return new Assessment().addJoinInternal(selectBuilder, idColumn, reference, borrower);
+  }
 
   /**
    * Fetches the list of all assessments for the provided user

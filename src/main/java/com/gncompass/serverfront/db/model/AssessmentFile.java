@@ -1,13 +1,14 @@
 package com.gncompass.serverfront.db.model;
 
+import com.gncompass.serverfront.db.SQLManager;
 import com.gncompass.serverfront.db.SelectBuilder;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-// import java.util.UUID;
 
 public class AssessmentFile extends AbstractObject {
   // Database name
@@ -98,6 +99,48 @@ public class AssessmentFile extends AbstractObject {
    */
   public com.gncompass.serverfront.api.model.AssessmentFile getApiModel() {
     return new com.gncompass.serverfront.api.model.AssessmentFile(mFileName, mType, mUploadedTime);
+  }
+
+  /**
+   * Fetches a single assessment file from the database
+   * @param borrower the borrower object to fetch for
+   * @param reference the reference UUID to the assessment
+   * @param fileName the specific file name (non case specific)
+   * @return the assessment file object with the information fetched. If not found, return NULL
+   */
+  public AssessmentFile getFile(Borrower borrower, String reference, String fileName) {
+    // Build the query
+    SelectBuilder selectBuilder = buildSelectSql()
+        .where(getColumn(FILENAME) + "=?");
+    Assessment.addJoin(selectBuilder, getColumn(ASSESSMENT), reference, borrower);
+    String selectSql = selectBuilder.toString();
+
+    // Try to execute against the connection
+    try (Connection conn = SQLManager.getConnection()) {
+      try (PreparedStatement ps = conn.prepareStatement(selectSql)) {
+        ps.setString(1, fileName);
+        try (ResultSet rs = ps.executeQuery()) {
+          if (rs.next()) {
+            updateFromFetch(rs);
+            return this;
+          }
+        }
+      }
+
+    } catch (SQLException e) {
+      throw new RuntimeException("Unable to fetch the assessment file reference with SQL", e);
+    }
+
+    return null;
+  }
+
+  /**
+   * Returns the google storage path to the file
+   * @param assessmentUuid the assessment UUID reference
+   * @return the string to the google storage path
+   */
+  public String getGSPath(String assessmentUuid) {
+    return "/gs/" + mBucket + "/" + assessmentUuid + "/" + mFileName;
   }
 
   /**

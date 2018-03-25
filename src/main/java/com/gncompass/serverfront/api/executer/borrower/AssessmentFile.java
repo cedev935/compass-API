@@ -1,8 +1,13 @@
 package com.gncompass.serverfront.api.executer.borrower;
 
 import com.gncompass.serverfront.api.executer.AbstractExecuter;
+import com.gncompass.serverfront.db.model.Borrower;
 import com.gncompass.serverfront.util.HttpHelper;
 import com.gncompass.serverfront.util.StringHelper;
+
+import com.google.appengine.api.blobstore.BlobKey;
+import com.google.appengine.api.blobstore.BlobstoreService;
+import com.google.appengine.api.blobstore.BlobstoreServiceFactory;
 
 import java.io.IOException;
 
@@ -25,13 +30,39 @@ public class AssessmentFile extends AbstractExecuter {
 
   @Override
   protected void execute(HttpServletResponse response) throws ServletException, IOException {
-    // TODO! Implement
-    JsonObject jsonResponse = Json.createObjectBuilder()
-        .add("code", 4)
-        .add("type", "ok")
-        .add("message", "magic!")
-        .build();
-    HttpHelper.setResponseSuccess(response, jsonResponse);
+    boolean next = false;
+
+    // Fetch the borrower
+    Borrower borrower = new Borrower().getBorrower(mBorrowerUuid);
+    if (borrower != null) {
+      next = true;
+    } else {
+      // This is a server error. Should never fail since this user was authenticated
+      HttpHelper.setResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+          1601, "The borrower information failed to be fetched from the repository");
+    }
+
+    // Fetch the assessment file reference
+    com.gncompass.serverfront.db.model.AssessmentFile assessmentFile = null;
+    if (next) {
+      next = false;
+      assessmentFile = new com.gncompass.serverfront.db.model.AssessmentFile()
+                                                .getFile(borrower, mAssessmentUuid, mFileName);
+      if (assessmentFile != null) {
+        next = true;
+      } else {
+        // Assessment file not found
+        HttpHelper.setResponseError(response, HttpServletResponse.SC_NOT_FOUND,
+            1602, "The assessment file for this borrower could not be found");
+      }
+    }
+
+    // Fetch the file from the cloud storage
+    if (next) {
+      BlobstoreService blobstoreService = BlobstoreServiceFactory.getBlobstoreService();
+      BlobKey blobKey = blobstoreService.createGsBlobKey(assessmentFile.getGSPath(mAssessmentUuid));
+      blobstoreService.serve(blobKey, response);
+    }
   }
 
   @Override
