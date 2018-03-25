@@ -5,6 +5,7 @@ import com.gncompass.serverfront.api.model.AssessmentSummary;
 import com.gncompass.serverfront.db.InsertBuilder;
 import com.gncompass.serverfront.db.SelectBuilder;
 import com.gncompass.serverfront.db.SQLManager;
+import com.gncompass.serverfront.db.UpdateBuilder;
 import com.gncompass.serverfront.util.StateHelper;
 import com.gncompass.serverfront.util.UuidHelper;
 
@@ -33,6 +34,7 @@ public class Assessment extends AbstractObject {
   private static final String RATING = "rating";
 
   // General statics
+  private static final int MIN_SUBMIT_FILES = 2;
   private static final String UPLOAD_BUCKET = "test-gnc-data";
   private static final String UPLOAD_CALLBACK = "/uploads/assessments/";
 
@@ -171,6 +173,14 @@ public class Assessment extends AbstractObject {
   }
 
   /**
+   * Can this assessment be submitted. Checks for pre-validation requirements
+   * @return TRUE if it can be submitted with submit(). FALSE otherwise
+   */
+  public boolean canBeSubmitted() {
+    return (mStatusId == Status.STARTED.getValue() && mAssessmentFiles.size() >= MIN_SUBMIT_FILES);
+  }
+
+  /**
    * Returns the API model for the assessment info object
    * @return the API mode for the assessment info
    */
@@ -249,6 +259,31 @@ public class Assessment extends AbstractObject {
   @Override
   public String getTable() {
     return TABLE_NAME;
+  }
+
+  /**
+   * Submits the assessment. This updates the state in the database to add it to the pending list
+   * for review
+   * @return TRUE if the assessment was successfully submitted. FALSE otherwise
+   */
+  public boolean submit() {
+    if (canBeSubmitted()) {
+      // The update statement
+      String updateSql = new UpdateBuilder(getTable())
+          .set(getColumn(STATUS) + "=" + Integer.toString(Status.PENDING.getValue()))
+          .set(getColumn(UPDATED) + "=NOW()")
+          .where(getColumn(ID) + "=" + Long.toString(mId))
+          .toString();
+
+      // Execute the update statement
+      try (Connection conn = SQLManager.getConnection()) {
+        conn.prepareStatement(updateSql).executeUpdate();
+        return true;
+      } catch (SQLException e) {
+        throw new RuntimeException("Unable to update the assessment to submit with SQL", e);
+      }
+    }
+    return false;
   }
 
   /*=============================================================

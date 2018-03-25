@@ -1,6 +1,8 @@
 package com.gncompass.serverfront.api.executer.borrower;
 
 import com.gncompass.serverfront.api.executer.AbstractExecuter;
+import com.gncompass.serverfront.db.model.Assessment;
+import com.gncompass.serverfront.db.model.Borrower;
 import com.gncompass.serverfront.util.HttpHelper;
 import com.gncompass.serverfront.util.StringHelper;
 
@@ -23,13 +25,44 @@ public class AssessmentSubmit extends AbstractExecuter {
 
   @Override
   protected void execute(HttpServletResponse response) throws ServletException, IOException {
-    // TODO! Implement
-    JsonObject jsonResponse = Json.createObjectBuilder()
-        .add("code", 4)
-        .add("type", "ok")
-        .add("message", "magic!")
-        .build();
-    HttpHelper.setResponseSuccess(response, jsonResponse);
+    boolean next = false;
+
+    // Fetch the borrower
+    Borrower borrower = new Borrower().getBorrower(mBorrowerUuid);
+    if (borrower != null) {
+      next = true;
+    } else {
+      // This is a server error. Should never fail since this user was authenticated
+      HttpHelper.setResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+          1901, "The borrower information failed to be fetched from the repository");
+    }
+
+    // Fetch the assessment
+    Assessment assessment = null;
+    if (next) {
+      assessment = new Assessment().getAssessment(borrower, mAssessmentUuid);
+      if (assessment != null) {
+        next = true;
+      } else {
+        HttpHelper.setResponseError(response, HttpServletResponse.SC_NOT_FOUND,
+            1902, "The assessment for this borrower could not be found");
+      }
+    }
+
+    // Validate if the assessment can be submitted and submit it
+    if (next) {
+      if (assessment.canBeSubmitted()) {
+        if (assessment.submit()) {
+          HttpHelper.setResponseSuccess(response, null);
+        } else {
+          HttpHelper.setResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+              1904, "The assessment for this borrower failed to be submitted");
+        }
+      } else {
+        HttpHelper.setResponseError(response, HttpServletResponse.SC_FORBIDDEN,
+            1903, "The assessment for this borrower could not be submitted");
+      }
+    }
   }
 
   @Override
