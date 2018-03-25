@@ -4,7 +4,12 @@ import com.gncompass.serverfront.api.model.AssessmentInfo;
 import com.gncompass.serverfront.api.model.AssessmentSummary;
 import com.gncompass.serverfront.db.SelectBuilder;
 import com.gncompass.serverfront.db.SQLManager;
+import com.gncompass.serverfront.util.StateHelper;
 import com.gncompass.serverfront.util.UuidHelper;
+
+import com.google.appengine.api.blobstore.BlobstoreService;
+import com.google.appengine.api.blobstore.BlobstoreServiceFactory;
+import com.google.appengine.api.blobstore.UploadOptions;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -25,6 +30,28 @@ public class Assessment extends AbstractObject {
   private static final String UPDATED = "updated";
   private static final String STATUS = "status";
   private static final String RATING = "rating";
+
+  // General statics
+  private static final String UPLOAD_BUCKET = "test-gnc-data";
+  private static final String UPLOAD_CALLBACK = "/uploads/assessments/";
+
+  // Status enumeration
+  public enum Status {
+    STARTED(1),
+    PENDING(2),
+    APPROVED(3),
+    REJECTED(4);
+
+    private final int value;
+
+    Status(final int newValue) {
+      value = newValue;
+    }
+
+    public int getValue() {
+      return value;
+    }
+  }
 
   // Database parameters
   public long mId = 0;
@@ -111,10 +138,28 @@ public class Assessment extends AbstractObject {
    * @return the API mode for the assessment info
    */
   public AssessmentInfo getApiInfo() {
-    // TODO: Fetch upload path!
+    // Fetch the upload URL
+    String uploadUrl = null;
+    if (mStatusId == Status.STARTED.getValue()) {
+      BlobstoreService blobstoreService = BlobstoreServiceFactory.getBlobstoreService();
+      UploadOptions uploadOptions = null;
+      String bucket = null;
+      if (StateHelper.isProduction()) {
+        bucket = UPLOAD_BUCKET;
+      }
+      if (bucket == null || bucket.isEmpty()) {
+        uploadOptions = UploadOptions.Builder.withDefaults();
+      } else {
+        uploadOptions = UploadOptions.Builder.withGoogleStorageBucketName(bucket);
+      }
+      String callbackUrl = UPLOAD_CALLBACK + mReferenceUuid.toString();
+      uploadUrl = blobstoreService.createUploadUrl(callbackUrl, uploadOptions);
+    }
+
+    // Generate the assessment info
     AssessmentInfo info = new AssessmentInfo(
                                     mRegisteredTime, mUpdatedTime, mStatusId, mRatingId,
-                                    "http://fakedomain.com/testpath");
+                                    uploadUrl);
     for (AssessmentFile file : mAssessmentFiles) {
       info.addFile(file.getApiModel());
     }
