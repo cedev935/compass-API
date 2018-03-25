@@ -2,6 +2,7 @@ package com.gncompass.serverfront.db.model;
 
 import com.gncompass.serverfront.api.model.AssessmentInfo;
 import com.gncompass.serverfront.api.model.AssessmentSummary;
+import com.gncompass.serverfront.db.InsertBuilder;
 import com.gncompass.serverfront.db.SelectBuilder;
 import com.gncompass.serverfront.db.SQLManager;
 import com.gncompass.serverfront.util.StateHelper;
@@ -132,6 +133,42 @@ public class Assessment extends AbstractObject {
   /*=============================================================
    * PUBLIC FUNCTIONS
    *============================================================*/
+
+  /**
+    * Adds the assessment to the database
+    * @param borrower the borrower that will own this assessment
+    * @return TRUE if successfully added. FALSE otherwise
+    */
+  public boolean addToDatabase(Borrower borrower) {
+    mReferenceUuid = UUID.randomUUID();
+
+    // Create the assessment insert and select statement
+    String insertSql = new InsertBuilder(getTable())
+        .set(REFERENCE, UuidHelper.getHexFromUUID(mReferenceUuid, true))
+        .set(BORROWER, Long.toString(borrower.mId))
+        .set(STATUS, Integer.toString(Status.STARTED.getValue()))
+        .toString();
+    SelectBuilder selectBuilder = buildSelectSql(borrower, null);
+    selectBuilder.where(getColumn(ID) + "=LAST_INSERT_ID()");
+    String selectSql = selectBuilder.toString();
+
+    // Execute the insert
+    try (Connection conn = SQLManager.getConnection()) {
+      if (conn.prepareStatement(insertSql).executeUpdate() == 1) {
+        // Fetch the assessment that was just created
+        try (ResultSet rs = conn.prepareStatement(selectSql).executeQuery()) {
+          if (rs.next()) {
+            updateFromFetch(rs);
+            return true;
+          }
+        }
+      }
+    } catch (SQLException e) {
+      throw new RuntimeException("Unable to add the assessment for an existing borrower", e);
+    }
+
+    return false;
+  }
 
   /**
    * Returns the API model for the assessment info object
