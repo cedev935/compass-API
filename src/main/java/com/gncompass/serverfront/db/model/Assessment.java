@@ -6,6 +6,7 @@ import com.gncompass.serverfront.db.InsertBuilder;
 import com.gncompass.serverfront.db.SelectBuilder;
 import com.gncompass.serverfront.db.SQLManager;
 import com.gncompass.serverfront.db.UpdateBuilder;
+import com.gncompass.serverfront.util.HttpHelper;
 import com.gncompass.serverfront.util.StateHelper;
 import com.gncompass.serverfront.util.UuidHelper;
 
@@ -35,8 +36,7 @@ public class Assessment extends AbstractObject {
 
   // General statics
   private static final int MIN_SUBMIT_FILES = 2;
-  private static final String UPLOAD_BUCKET = "test-gnc-data";
-  private static final String UPLOAD_CALLBACK = "/uploads/assessments/";
+  private static final String UPLOAD_CALLBACK = HttpHelper.BASE_PATH + "/uploads/assessments/";
 
   // Status enumeration
   public enum Status {
@@ -98,14 +98,23 @@ public class Assessment extends AbstractObject {
   }
 
   /**
-   * Build the select SQL for all properties related to the assessment
-   * @param borrower the borrower reference
-   * @param reference the bank connection UUID reference
+   * Build the select SQL for all properties related to the assessment. Both parameters cannot be
+   * NULL
+   * @param borrower the borrower reference. Can be null
+   * @param reference the bank connection UUID reference. Can be null
    * @return the SelectBuilder reference object
    */
   private SelectBuilder buildSelectSql(Borrower borrower, String reference) {
-    SelectBuilder selectBuilder = buildSelectSql()
-        .where(getColumn(BORROWER) + "=" + Long.toString(borrower.mId));
+    if (borrower == null && reference == null) {
+      throw new RuntimeException(
+                "Both the borrower and the reference are null on select assessment. Not permitted");
+    }
+
+    // Build the select statement
+    SelectBuilder selectBuilder = buildSelectSql();
+    if (borrower != null) {
+      selectBuilder.where(getColumn(BORROWER) + "=" + Long.toString(borrower.mId));
+    }
     if (reference != null) {
       selectBuilder.where(getColumn(REFERENCE) + "=" + UuidHelper.getHexFromUUID(reference, true));
     }
@@ -194,7 +203,15 @@ public class Assessment extends AbstractObject {
    * @return TRUE if it can be submitted with submit(). FALSE otherwise
    */
   public boolean canBeSubmitted() {
-    return (mStatusId == Status.STARTED.getValue() && mAssessmentFiles.size() >= MIN_SUBMIT_FILES);
+    return (canUpload() && mAssessmentFiles.size() >= MIN_SUBMIT_FILES);
+  }
+
+  /**
+   * Can this assessment accept upload files. Only permitted before it is submitted
+   * @return TRUE if it can have files uploaded. FALSE otherwise
+   */
+  public boolean canUpload() {
+    return (mStatusId == Status.STARTED.getValue());
   }
 
   /**
@@ -209,7 +226,7 @@ public class Assessment extends AbstractObject {
       UploadOptions uploadOptions = null;
       String bucket = null;
       if (StateHelper.isProduction()) {
-        bucket = UPLOAD_BUCKET;
+        bucket = HttpHelper.BUCKET_UPLOADS;
       }
       if (bucket == null || bucket.isEmpty()) {
         uploadOptions = UploadOptions.Builder.withDefaults();
@@ -266,6 +283,20 @@ public class Assessment extends AbstractObject {
       throw new RuntimeException("Unable to fetch the assessment reference with SQL", e);
     }
 
+    return null;
+  }
+
+  /**
+   * Returns the assessment file that matches the newly created assessment file
+   * @param file the assessment file to search for
+   * @return the assessment file that matches. If none, returns NULL
+   */
+  public AssessmentFile getFileThatMatches(AssessmentFile file) {
+    for (AssessmentFile existingFile : mAssessmentFiles) {
+      if (existingFile.matches(file)) {
+        return existingFile;
+      }
+    }
     return null;
   }
 

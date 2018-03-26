@@ -13,6 +13,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 public class HttpHelper {
+  public static String BASE_PATH = "/core/v1";
+  public static final String BUCKET_UPLOADS = "test-gnc-data";
   public static String CONTENT_JSON = "application/json";
 
   public enum RequestType {
