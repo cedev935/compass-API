@@ -14,6 +14,7 @@ import javax.json.JsonObjectBuilder;
 import javax.servlet.http.HttpServletRequest;
 
 public class AssessmentInfo extends AbstractModel {
+  private static final String KEY_REFERENCE = "reference";
   private static final String KEY_REGISTERED = "registered";
   private static final String KEY_UPDATED = "updated";
   private static final String KEY_STATUS = "status";
@@ -22,6 +23,7 @@ public class AssessmentInfo extends AbstractModel {
   private static final String KEY_FILES = "files";
   private static final Logger LOG = Logger.getLogger(AssessmentInfo.class.getName());
 
+  public String mReference = null;
   public long mRegisteredTime = 0L;
   public long mUpdatedTime = 0L;
   public int mStatusId = 0;
@@ -32,8 +34,14 @@ public class AssessmentInfo extends AbstractModel {
   public AssessmentInfo() {
   }
 
-  public AssessmentInfo(long registeredTime, long updatedTime, int statusId, int ratingId,
-                        String uploadPath) {
+  public AssessmentInfo(long registeredTime, long updatedTime, int statusId,
+                        int ratingId, String uploadPath) {
+    this(null, registeredTime, updatedTime, statusId, ratingId, uploadPath);
+  }
+
+  public AssessmentInfo(String reference, long registeredTime, long updatedTime, int statusId,
+                        int ratingId, String uploadPath) {
+    mReference = reference;
     mRegisteredTime = registeredTime;
     mUpdatedTime = updatedTime;
     mStatusId = statusId;
@@ -51,6 +59,9 @@ public class AssessmentInfo extends AbstractModel {
 
   @Override
   protected void addToJson(JsonObjectBuilder jsonBuilder) {
+    if (mReference != null) {
+      jsonBuilder.add(KEY_REFERENCE, mReference);
+    }
     jsonBuilder.add(KEY_REGISTERED, mRegisteredTime);
     jsonBuilder.add(KEY_UPDATED, mUpdatedTime);
     jsonBuilder.add(KEY_STATUS, mStatusId);
@@ -82,6 +93,7 @@ public class AssessmentInfo extends AbstractModel {
   public void parse(HttpServletRequest request) {
     JsonObject jsonObject = getContent(request);
     if(jsonObject != null) {
+      mReference = jsonObject.getString(KEY_REFERENCE, null);
       mRegisteredTime = getLongFromJson(jsonObject, KEY_REGISTERED, 0L);
       mUpdatedTime = getLongFromJson(jsonObject, KEY_UPDATED, 0L);
       mStatusId = jsonObject.getInt(KEY_STATUS, 0);

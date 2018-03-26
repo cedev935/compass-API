@@ -216,9 +216,10 @@ public class Assessment extends AbstractObject {
 
   /**
    * Returns the API model for the assessment info object
+   * @param includeReference should the reference UUID be included in the info set
    * @return the API mode for the assessment info
    */
-  public AssessmentInfo getApiInfo() {
+  public AssessmentInfo getApiInfo(boolean includeReference) {
     // Fetch the upload URL
     String uploadUrl = null;
     if (mStatusId == Status.STARTED.getValue()) {
@@ -238,9 +239,14 @@ public class Assessment extends AbstractObject {
     }
 
     // Generate the assessment info
-    AssessmentInfo info = new AssessmentInfo(
-                                    mRegisteredTime, mUpdatedTime, mStatusId, mRatingId,
-                                    uploadUrl);
+    AssessmentInfo info;
+    if (includeReference) {
+      info = new AssessmentInfo(mReferenceUuid.toString(), mRegisteredTime, mUpdatedTime, mStatusId,
+                                mRatingId, uploadUrl);
+    } else {
+      info = new AssessmentInfo(mRegisteredTime, mUpdatedTime, mStatusId, mRatingId, uploadUrl);
+    }
+
     for (AssessmentFile file : mAssessmentFiles) {
       info.addFile(file.getApiModel());
     }

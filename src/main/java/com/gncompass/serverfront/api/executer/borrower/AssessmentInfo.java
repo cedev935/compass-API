@@ -42,7 +42,7 @@ public class AssessmentInfo extends AbstractExecuter {
       Assessment assessment = new Assessment().getAssessment(borrower, mAssessmentUuid);
       if (assessment != null) {
           HttpHelper.setResponseSuccess(response, HttpServletResponse.SC_OK,
-                                        assessment.getApiInfo().toJson());
+                                        assessment.getApiInfo(false).toJson());
       } else {
         // Bank connection not found error
         HttpHelper.setResponseError(response, HttpServletResponse.SC_NOT_FOUND,

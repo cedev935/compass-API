@@ -46,7 +46,7 @@ public class AssessmentCreate extends AbstractExecuter {
       if (assessment.addToDatabase(borrower)) {
         // Created
         HttpHelper.setResponseSuccess(response, HttpServletResponse.SC_CREATED,
-                                      assessment.getApiInfo().toJson());
+                                      assessment.getApiInfo(true).toJson());
       } else {
         // Failed to create
         HttpHelper.setResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
