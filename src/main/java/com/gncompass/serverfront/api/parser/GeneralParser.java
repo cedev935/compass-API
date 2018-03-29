@@ -2,6 +2,7 @@ package com.gncompass.serverfront.api.parser;
 
 import com.gncompass.serverfront.api.executer.AbstractExecuter;
 import com.gncompass.serverfront.api.executer.CountriesGet;
+import com.gncompass.serverfront.api.executer.CountryBanksGet;
 import com.gncompass.serverfront.api.executer.UploadedAssessmentFile;
 import com.gncompass.serverfront.util.HttpHelper.RequestType;
 
@@ -16,6 +17,7 @@ public abstract class GeneralParser {
   private static final String FUNCTION_COUNTRIES = "countries";
   private static final String FUNCTION_UPLOADS = "uploads";
   private static final String TYPE_ASSESSMENTS = "assessments";
+  private static final String TYPE_BANKS = "banks";
 
   public static void parseRequest(String function, List<String> pathChunks, RequestType type,
                                   HttpServletRequest request, HttpServletResponse response)
@@ -28,6 +30,12 @@ public abstract class GeneralParser {
         if (pathChunks.size() == 0) {
           if (type == RequestType.GET) {
             executer = new CountriesGet();
+          }
+        } else if (pathChunks.size() == 2) {
+          if (pathChunks.get(1).equals(TYPE_BANKS)) {
+            if (type == RequestType.GET) {
+              executer = new CountryBanksGet(pathChunks.get(0));
+            }
           }
         }
         break;

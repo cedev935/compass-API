@@ -35,6 +35,23 @@ public class Country extends AbstractObject {
   }
 
   /*=============================================================
+   * PRIVATE FUNCTIONS
+   *============================================================*/
+
+  /**
+   * Adds a join of this table to an existing select statement on the column provided
+   * @param selectBuilder the select builder to add to
+   * @param countryIdColumn the column in the main table select to join to
+   * @param countryCode the two digit country code of the required country
+   * @return the SelectBuilder with the modifications
+   */
+  private SelectBuilder joinToSelectSql(SelectBuilder selectBuilder, String countryIdColumn, String countryCode) {
+    String onStatement = getColumn(ID) + "=" + countryIdColumn
+             + " AND " + getColumn(CODE) + "='" + countryCode + "'";
+    return selectBuilder.join(getTable(), onStatement);
+  }
+
+  /*=============================================================
    * PROTECTED FUNCTIONS
    *============================================================*/
 
@@ -195,5 +212,17 @@ public class Country extends AbstractObject {
     }
 
     return countries;
+  }
+
+  /**
+   * Adds a join statement to the select builder provided connecting the country table to the caller
+   * @param selectBuilder the select builder to add the join information to
+   * @param countryIdColumn the column in the main table that will tie to the ID index column
+   * @param countryCode the two digit country code to identify the chosen country on join
+   * @return the select builder returned with the modifications
+   */
+  static SelectBuilder join(SelectBuilder selectBuilder, String countryIdColumn,
+                            String countryCode) {
+    return new Country().joinToSelectSql(selectBuilder, countryIdColumn, countryCode);
   }
 }
