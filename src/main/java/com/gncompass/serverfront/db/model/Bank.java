@@ -60,6 +60,18 @@ public class Bank extends AbstractObject {
   }
 
   /**
+   * Build the select SQL for all properties related to a bank
+   * @param id the bank ID
+   * @param countryId the country ID that would contain the bank
+   * @return the SelectBuilder reference object
+   */
+  private SelectBuilder buildSelectSql(long id, long countryId) {
+    return buildSelectSql()
+        .where(getColumn(ID) + "=" + Long.toString(id))
+        .where(getColumn(COUNTRY_ID) + "=" + Long.toString(countryId));
+  }
+
+  /**
    * Builds a select SQL for all properties related to a bank and fetches all banks tied to the
    * given country code
    * @param countryCode the two digit country code to fetch the banks for
@@ -109,6 +121,31 @@ public class Bank extends AbstractObject {
    */
   public com.gncompass.serverfront.api.model.Bank getApiModel() {
     return new com.gncompass.serverfront.api.model.Bank(mId, mCode, mName);
+  }
+
+  /**
+   * Returns the bank that matches the ID provided in the given country
+   * @param id the bank ID
+   * @param countryId the country ID
+   * @return the bank reference. NULL if not found
+   */
+  public Bank getBank(long id, long countryId) {
+    // Build the query
+    String selectSql = buildSelectSql(id, countryId).toString();
+
+    // Try to execute against the connection
+    try (Connection conn = SQLManager.getConnection()) {
+      try (ResultSet rs = conn.prepareStatement(selectSql).executeQuery()) {
+        if (rs.next()) {
+          updateFromFetch(rs);
+          return this;
+        }
+      }
+    } catch (SQLException e) {
+      throw new RuntimeException("Unable to fetch the bank by ID within the country with SQL", e);
+    }
+
+    return null;
   }
 
   /*

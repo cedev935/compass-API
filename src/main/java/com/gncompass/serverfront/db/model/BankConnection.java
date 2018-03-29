@@ -1,6 +1,7 @@
 package com.gncompass.serverfront.db.model;
 
 import com.gncompass.serverfront.api.model.BankConnectionInfo;
+import com.gncompass.serverfront.api.model.BankConnectionNew;
 import com.gncompass.serverfront.api.model.BankConnectionSummary;
 import com.gncompass.serverfront.db.InsertBuilder;
 import com.gncompass.serverfront.db.SelectBuilder;
@@ -34,7 +35,7 @@ public class BankConnection extends AbstractObject {
   //public long mUserId = 0;
   public byte[] mLoginId = null;
   public boolean mEnabled = false;
-  public int mInstitution = 0;
+  public long mInstitution = 0;
   public int mTransit = 0;
   public int mAccount = 0;
 
@@ -46,9 +47,9 @@ public class BankConnection extends AbstractObject {
   public BankConnection() {
   }
 
-  public BankConnection(BankConnectionInfo bankInfo) {
+  public BankConnection(BankConnectionNew bankInfo) {
     mAccount = bankInfo.mAccount;
-    mInstitution = bankInfo.mInstitution;
+    mInstitution = bankInfo.mBankId;
     mLoginUuid = UUID.fromString(bankInfo.mLoginId);
     mTransit = bankInfo.mTransit;
 
@@ -111,7 +112,7 @@ public class BankConnection extends AbstractObject {
     //mUserId = resultSet.getLong(getColumn(USER));
     mLoginId = resultSet.getBytes(getColumn(LOGIN_ID));
     mEnabled = resultSet.getBoolean(getColumn(ENABLED));
-    mInstitution = resultSet.getInt(getColumn(INSTITUTION));
+    mInstitution = resultSet.getLong(getColumn(INSTITUTION));
     mTransit = resultSet.getInt(getColumn(TRANSIT));
     mAccount = resultSet.getInt(getColumn(ACCOUNT));
 
@@ -137,7 +138,7 @@ public class BankConnection extends AbstractObject {
           .set(REFERENCE, UuidHelper.getHexFromUUID(mReferenceUuid, true))
           .set(USER_ID, Long.toString(user.mId))
           .set(LOGIN_ID, UuidHelper.getHexFromUUID(mLoginUuid, true))
-          .set(INSTITUTION, Integer.toString(mInstitution))
+          .set(INSTITUTION, Long.toString(mInstitution))
           .set(TRANSIT, Integer.toString(mTransit))
           .set(ACCOUNT, Integer.toString(mAccount))
           .toString();
@@ -157,7 +158,7 @@ public class BankConnection extends AbstractObject {
    * @return the API mode for the bank info
    */
   public BankConnectionInfo getApiInfo() {
-    return new BankConnectionInfo(mLoginUuid.toString(), mInstitution, mTransit, mAccount);
+    return new BankConnectionInfo(mLoginUuid.toString(), mBank.mCode, mTransit, mAccount);
   }
 
   /**
