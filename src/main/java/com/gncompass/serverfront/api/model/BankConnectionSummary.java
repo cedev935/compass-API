@@ -8,18 +8,18 @@ import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.servlet.http.HttpServletRequest;
 
-public class BankSummary extends AbstractModel {
+public class BankConnectionSummary extends AbstractModel {
   private static final String KEY_INSTITUTION = "institution";
   private static final String KEY_REFERENCE = "reference";
-  private static final Logger LOG = Logger.getLogger(BankSummary.class.getName());
+  private static final Logger LOG = Logger.getLogger(BankConnectionSummary.class.getName());
 
   public int mInstitution = 0;
   public String mReference = null;
 
-  public BankSummary() {
+  public BankConnectionSummary() {
   }
 
-  public BankSummary(String reference, int institution) {
+  public BankConnectionSummary(String reference, int institution) {
     mReference = reference;
     mInstitution = institution;
   }

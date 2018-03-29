@@ -1,6 +1,6 @@
 package com.gncompass.serverfront.api.executer.borrower;
 
-import com.gncompass.serverfront.api.model.BankInfo;
+import com.gncompass.serverfront.api.model.BankConnectionInfo;
 import com.gncompass.serverfront.api.executer.AbstractExecuter;
 import com.gncompass.serverfront.db.model.BankConnection;
 import com.gncompass.serverfront.db.model.Borrower;
@@ -20,11 +20,11 @@ import javax.servlet.ServletException;
 //       a single user already. Return 409 if there is (maybe return the reference?)
 
 public class BankCreate extends AbstractExecuter {
-  private BankInfo mBankRequest = null;
+  private BankConnectionInfo mBankRequest = null;
   private String mBorrowerUuid = null;
 
   public BankCreate(String borrowerUuid) {
-    mBankRequest = new BankInfo();
+    mBankRequest = new BankConnectionInfo();
     mBorrowerUuid = borrowerUuid;
   }
 

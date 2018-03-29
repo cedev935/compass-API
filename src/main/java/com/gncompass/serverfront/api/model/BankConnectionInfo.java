@@ -8,22 +8,22 @@ import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.servlet.http.HttpServletRequest;
 
-public class BankInfo extends AbstractModel {
+public class BankConnectionInfo extends AbstractModel {
   private static final String KEY_ACCOUNT = "account";
   private static final String KEY_INSTITUTION = "institution";
   private static final String KEY_LOGIN_ID = "login_id";
   private static final String KEY_TRANSIT = "transit";
-  private static final Logger LOG = Logger.getLogger(BankInfo.class.getName());
+  private static final Logger LOG = Logger.getLogger(BankConnectionInfo.class.getName());
 
   public int mAccount = 0;
   public int mInstitution = 0;
   public String mLoginId = null;
   public int mTransit = 0;
 
-  public BankInfo() {
+  public BankConnectionInfo() {
   }
 
-  public BankInfo(String loginId, int institution, int transit, int account) {
+  public BankConnectionInfo(String loginId, int institution, int transit, int account) {
     mAccount = account;
     mInstitution = institution;
     mLoginId = loginId;

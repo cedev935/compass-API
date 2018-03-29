@@ -1,7 +1,7 @@
 package com.gncompass.serverfront.db.model;
 
-import com.gncompass.serverfront.api.model.BankInfo;
-import com.gncompass.serverfront.api.model.BankSummary;
+import com.gncompass.serverfront.api.model.BankConnectionInfo;
+import com.gncompass.serverfront.api.model.BankConnectionSummary;
 import com.gncompass.serverfront.db.InsertBuilder;
 import com.gncompass.serverfront.db.SelectBuilder;
 import com.gncompass.serverfront.db.SQLManager;
@@ -45,7 +45,7 @@ public class BankConnection extends AbstractObject {
   public BankConnection() {
   }
 
-  public BankConnection(BankInfo bankInfo) {
+  public BankConnection(BankConnectionInfo bankInfo) {
     mAccount = bankInfo.mAccount;
     mInstitution = bankInfo.mInstitution;
     mLoginUuid = UUID.fromString(bankInfo.mLoginId);
@@ -153,16 +153,16 @@ public class BankConnection extends AbstractObject {
    * Returns the API model for the bank info object
    * @return the API mode for the bank info
    */
-  public BankInfo getApiInfo() {
-    return new BankInfo(mLoginUuid.toString(), mInstitution, mTransit, mAccount);
+  public BankConnectionInfo getApiInfo() {
+    return new BankConnectionInfo(mLoginUuid.toString(), mInstitution, mTransit, mAccount);
   }
 
   /**
    * Returns the API model for the bank summary information
    * @return the API model for a bank summary
    */
-  public BankSummary getApiSummary() {
-    return new BankSummary(mReferenceUuid.toString(), mInstitution);
+  public BankConnectionSummary getApiSummary() {
+    return new BankConnectionSummary(mReferenceUuid.toString(), mInstitution);
   }
 
   /**
