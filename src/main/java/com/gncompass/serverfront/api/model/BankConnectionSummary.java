@@ -10,24 +10,28 @@ import javax.servlet.http.HttpServletRequest;
 
 public class BankConnectionSummary extends AbstractModel {
   private static final String KEY_INSTITUTION = "institution";
+  private static final String KEY_NAME = "name";
   private static final String KEY_REFERENCE = "reference";
   private static final Logger LOG = Logger.getLogger(BankConnectionSummary.class.getName());
 
   public int mInstitution = 0;
+  public String mName = null;
   public String mReference = null;
 
   public BankConnectionSummary() {
   }
 
-  public BankConnectionSummary(String reference, int institution) {
+  public BankConnectionSummary(String reference, int institution, String name) {
     mReference = reference;
     mInstitution = institution;
+    mName = name;
   }
 
   @Override
   protected void addToJson(JsonObjectBuilder jsonBuilder) {
     jsonBuilder.add(KEY_REFERENCE, mReference);
     jsonBuilder.add(KEY_INSTITUTION, mInstitution);
+    jsonBuilder.add(KEY_NAME, mName);
   }
 
   @Override
@@ -38,6 +42,7 @@ public class BankConnectionSummary extends AbstractModel {
   @Override
   public boolean isValid() {
     return (mInstitution > 0 &&
+            mName != null && mName.length() > 0 &&
             mReference != null && StringHelper.isUuid(mReference));
   }
 
@@ -46,6 +51,7 @@ public class BankConnectionSummary extends AbstractModel {
     JsonObject jsonObject = getContent(request);
     if(jsonObject != null) {
       mInstitution = jsonObject.getInt(KEY_INSTITUTION, 0);
+      mName = jsonObject.getString(KEY_NAME, null);
       mReference = jsonObject.getString(KEY_REFERENCE, null);
     }
   }

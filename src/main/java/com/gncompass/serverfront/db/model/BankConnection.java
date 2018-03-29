@@ -39,6 +39,7 @@ public class BankConnection extends AbstractObject {
   public int mAccount = 0;
 
   // Internals
+  public Bank mBank = null;
   public UUID mLoginUuid = null;
   public UUID mReferenceUuid = null;
 
@@ -82,7 +83,7 @@ public class BankConnection extends AbstractObject {
    * @return the SelectBuilder reference object
    */
   private SelectBuilder buildSelectSql() {
-    return new SelectBuilder(getTable())
+    SelectBuilder selectBuilder = new SelectBuilder(getTable())
         .column(getColumn(ID))
         .column(getColumn(REFERENCE))
         .column(getColumn(LOGIN_ID))
@@ -90,6 +91,7 @@ public class BankConnection extends AbstractObject {
         .column(getColumn(INSTITUTION))
         .column(getColumn(TRANSIT))
         .column(getColumn(ACCOUNT));
+    return Bank.join(selectBuilder, getColumn(INSTITUTION));
   }
 
   /*=============================================================
@@ -113,6 +115,7 @@ public class BankConnection extends AbstractObject {
     mTransit = resultSet.getInt(getColumn(TRANSIT));
     mAccount = resultSet.getInt(getColumn(ACCOUNT));
 
+    mBank = new Bank(resultSet);
     mLoginUuid = UuidHelper.getUUIDFromBytes(mLoginId);
     mReferenceUuid = UuidHelper.getUUIDFromBytes(mReference);
   }
@@ -162,7 +165,7 @@ public class BankConnection extends AbstractObject {
    * @return the API model for a bank summary
    */
   public BankConnectionSummary getApiSummary() {
-    return new BankConnectionSummary(mReferenceUuid.toString(), mInstitution);
+    return new BankConnectionSummary(mReferenceUuid.toString(), mBank.mCode, mBank.mName);
   }
 
   /**

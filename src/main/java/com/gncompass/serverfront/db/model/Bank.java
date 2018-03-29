@@ -39,16 +39,24 @@ public class Bank extends AbstractObject {
    *============================================================*/
 
   /**
-   * Build the select SQL for all properties related to a bank
-   * @return the SelectBuilder reference object
+   * Adds the columns to the select builder provided
+   * @param selectBuilder the select builder to add to
+   * @return the modified select builder
    */
-  private SelectBuilder buildSelectSql() {
-    return new SelectBuilder(getTable())
-        .column(getColumn(ID))
+  private SelectBuilder addColumnsToSelectSql(SelectBuilder selectBuilder) {
+    return selectBuilder.column(getColumn(ID))
         .column(getColumn(CODE))
         .column(getColumn(NAME))
         .column(getColumn(COUNTRY_ID))
         .column(getColumn(ENABLED));
+  }
+
+  /**
+   * Build the select SQL for all properties related to a bank
+   * @return the SelectBuilder reference object
+   */
+  private SelectBuilder buildSelectSql() {
+    return addColumnsToSelectSql(new SelectBuilder(getTable()));
   }
 
   /**
@@ -59,6 +67,17 @@ public class Bank extends AbstractObject {
    */
   private SelectBuilder buildSelectSqlForCountry(String countryCode) {
     return Country.join(buildSelectSql(), getColumn(COUNTRY_ID), countryCode);
+  }
+
+  /**
+   * Adds a join of this table to an existing select statement on the column provided
+   * @param selectBuilder the select builder to add to
+   * @param bankIdColumn the column in the main table select to join to
+   * @return the SelectBuilder with the modifications
+   */
+  private SelectBuilder joinToSelectSql(SelectBuilder selectBuilder, String bankIdColumn) {
+    return addColumnsToSelectSql(
+                  selectBuilder.join(getTable(), getColumn(ID) + "=" + bankIdColumn));
   }
 
   /*=============================================================
@@ -136,5 +155,15 @@ public class Bank extends AbstractObject {
     }
 
     return banks;
+  }
+
+  /**
+   * Adds a join statement to the select builder provided connecting the bank table to the caller
+   * @param selectBuilder the select builder to add the join information to
+   * @param bankIdColumn the column in the main table that will tie to the ID index column
+   * @return the select builder returned with the modifications
+   */
+  static SelectBuilder join(SelectBuilder selectBuilder, String bankIdColumn) {
+    return new Bank().joinToSelectSql(selectBuilder, bankIdColumn);
   }
 }
