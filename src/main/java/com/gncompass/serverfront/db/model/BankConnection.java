@@ -158,7 +158,8 @@ public class BankConnection extends AbstractObject {
    * @return the API mode for the bank info
    */
   public BankConnectionInfo getApiInfo() {
-    return new BankConnectionInfo(mLoginUuid.toString(), mBank.mCode, mTransit, mAccount);
+    return new BankConnectionInfo(mLoginUuid.toString(), mBank.mCode, mBank.mName,
+                                  mTransit, mAccount);
   }
 
   /**

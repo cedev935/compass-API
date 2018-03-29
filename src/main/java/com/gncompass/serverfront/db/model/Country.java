@@ -45,7 +45,8 @@ public class Country extends AbstractObject {
    * @param countryCode the two digit country code of the required country
    * @return the SelectBuilder with the modifications
    */
-  private SelectBuilder joinToSelectSql(SelectBuilder selectBuilder, String countryIdColumn, String countryCode) {
+  private SelectBuilder joinToSelectSql(SelectBuilder selectBuilder, String countryIdColumn,
+                                        String countryCode) {
     String onStatement = getColumn(ID) + "=" + countryIdColumn
              + " AND " + getColumn(CODE) + "='" + countryCode + "'";
     return selectBuilder.join(getTable(), onStatement);
