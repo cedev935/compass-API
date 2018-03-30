@@ -172,10 +172,11 @@ public class Investor extends User {
 
   /**
    * Returns the viewable API JSON container
+   * @param withConnectedInfo also include the connected info (banks, etc)
    * @return the user viewable API object
    */
   @Override
-  public UserViewable getViewable() {
+  public UserViewable getViewable(boolean withConnectedInfo) {
     // TODO! Implement
     throw new RuntimeException("Investor:getViewable() not implemented");
   }

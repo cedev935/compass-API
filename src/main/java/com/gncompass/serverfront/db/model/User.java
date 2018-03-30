@@ -69,6 +69,9 @@ public abstract class User extends AbstractObject {
   public long mCountryId = 0;
   public Timestamp mCreated = null;
 
+  // Internals
+  private List<BankConnection> mBankConnections = null;
+
   protected User() {
   }
 
@@ -201,14 +204,18 @@ public abstract class User extends AbstractObject {
   /**
    * Updates the viewable data set with the user data available in this parent
    * @param viewable the viewable data set
+   * @param withConnectedInfo also include the connected info (banks, etc)
    */
-  protected void updateViewable(UserViewable viewable) {
+  protected void updateViewable(UserViewable viewable, boolean withConnectedInfo) {
     // Fetch the country code
     Country country = new Country().getCountry(mCountryId);
 
     // Set the data
     viewable.setUserData(mName, mAddress1, mAddress2, mAddress3,
                             mCity, mProvince, mPostCode, country != null ? country.mCode : null);
+    if (withConnectedInfo) {
+      viewable.setBankData(mBankConnections);
+    }
   }
 
   /*=============================================================
@@ -275,6 +282,14 @@ public abstract class User extends AbstractObject {
   }
 
   /**
+   * Fetches a subset of connected information, such as bank connections that will be stored
+   * within this object
+   */
+  public void fetchConnectedInfo() {
+    mBankConnections = BankConnection.getAllForUser(this);
+  }
+
+  /**
    * Returns the user table ID
    * @return the user child table ID
    */
@@ -296,9 +311,10 @@ public abstract class User extends AbstractObject {
 
   /**
    * Returns the viewable API JSON container (abstract)
+   * @param withConnectedInfo also include the connected info (assessments, banks, etc)
    * @return the user viewable API object
    */
-  public abstract UserViewable getViewable();
+  public abstract UserViewable getViewable(boolean withConnectedInfo);
 
   /**
    * Returns if the user reference matches the string UUID provided (abstract)

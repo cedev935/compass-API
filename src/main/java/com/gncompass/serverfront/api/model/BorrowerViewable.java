@@ -1,14 +1,19 @@
 package com.gncompass.serverfront.api.model;
 
+import com.gncompass.serverfront.db.model.Assessment;
 import com.gncompass.serverfront.util.StringHelper;
 
+import java.util.List;
 import java.util.logging.Logger;
 
+import javax.json.Json;
+import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.servlet.http.HttpServletRequest;
 
 public class BorrowerViewable extends UserViewable {
+  private static final String KEY_ASSESSMENTS = "assessments";
   private static final String KEY_EMAIL = "email";
   private static final String KEY_EMPLOYER = "employer";
   private static final String KEY_JOB_TITLE = "job_title";
@@ -21,6 +26,9 @@ public class BorrowerViewable extends UserViewable {
   public String mJobTitle = null;
   public float mLoanCap = 0.0f;
   public String mPhone = null;
+
+  // Send only parameters
+  private List<Assessment> mAssessments = null;
 
   public BorrowerViewable() {
   }
@@ -45,6 +53,17 @@ public class BorrowerViewable extends UserViewable {
       jsonBuilder.add(KEY_LOAN_CAP, mLoanCap);
     }
     jsonBuilder.add(KEY_PHONE, mPhone);
+
+    if (mAssessments != null) {
+      JsonArrayBuilder assessmentArrayBuilder = Json.createArrayBuilder();
+      for (Assessment a : mAssessments) {
+        JsonObjectBuilder objectBuilder = a.getApiSummary().toJsonBuilder();
+        if (objectBuilder != null) {
+          assessmentArrayBuilder.add(objectBuilder);
+        }
+      }
+      jsonBuilder.add(KEY_ASSESSMENTS, assessmentArrayBuilder);
+    }
   }
 
   @Override
@@ -77,5 +96,9 @@ public class BorrowerViewable extends UserViewable {
       }
       mPhone = jsonObject.getString(KEY_PHONE, null);
     }
+  }
+
+  public void setAssessmentData(List<Assessment> assessments) {
+    mAssessments = assessments;
   }
 }

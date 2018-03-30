@@ -13,6 +13,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.UUID;
 
 public class Borrower extends User {
@@ -40,6 +41,7 @@ public class Borrower extends User {
   public float mLoanCap = 0.0f;
 
   // Internals
+  private List<Assessment> mAssessments = null;
   public UUID mReferenceUuid = null;
 
   public Borrower() {
@@ -193,6 +195,16 @@ public class Borrower extends User {
   }
 
   /**
+   * Fetches a subset of connected information, such as bank connections and assessments that
+   * will be stored within this object
+   */
+  @Override
+  public void fetchConnectedInfo() {
+    super.fetchConnectedInfo();
+    mAssessments = Assessment.getAllForBorrower(this);
+  }
+
+  /**
    * Fetches the borrower information from the database
    * @param reference the reference UUID to the borrower
    * @return the Borrower class object with the information fetched. If not found, return NULL
@@ -261,13 +273,17 @@ public class Borrower extends User {
 
   /**
    * Returns the viewable API JSON container
+   * @param withConnectedInfo also include the connected info (assessments, banks, etc)
    * @return the user viewable API object
    */
   @Override
-  public UserViewable getViewable() {
+  public UserViewable getViewable(boolean withConnectedInfo) {
     BorrowerViewable viewable =
                       new BorrowerViewable(mEmail, mPhone, mEmployer, mJobTitle, mLoanCap);
-    super.updateViewable(viewable);
+    if (withConnectedInfo) {
+      viewable.setAssessmentData(mAssessments);
+    }
+    super.updateViewable(viewable, withConnectedInfo);
     return viewable;
   }
 

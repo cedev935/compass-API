@@ -1,5 +1,11 @@
 package com.gncompass.serverfront.api.model;
 
+import com.gncompass.serverfront.db.model.BankConnection;
+
+import java.util.List;
+
+import javax.json.Json;
+import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.servlet.http.HttpServletRequest;
@@ -8,6 +14,7 @@ public abstract class UserViewable extends AbstractModel {
   private static final String KEY_ADDRESS1 = "address1";
   private static final String KEY_ADDRESS2 = "address2";
   private static final String KEY_ADDRESS3 = "address3";
+  private static final String KEY_BANKS = "banks";
   private static final String KEY_CITY = "city";
   private static final String KEY_COUNTRY = "country";
   private static final String KEY_NAME = "name";
@@ -22,6 +29,9 @@ public abstract class UserViewable extends AbstractModel {
   public String mName = null;
   public String mPostCode = null;
   public String mProvince = null;
+
+  // Send only parameters
+  private List<BankConnection> mBankConnections = null;
 
   @Override
   protected void addToJson(JsonObjectBuilder jsonBuilder) {
@@ -40,6 +50,17 @@ public abstract class UserViewable extends AbstractModel {
     }
     if (mProvince != null) {
       jsonBuilder.add(KEY_PROVINCE, mProvince);
+    }
+
+    if (mBankConnections != null) {
+      JsonArrayBuilder bankArrayBuilder = Json.createArrayBuilder();
+      for (BankConnection bc : mBankConnections) {
+        JsonObjectBuilder objectBuilder = bc.getApiSummary().toJsonBuilder();
+        if (objectBuilder != null) {
+          bankArrayBuilder.add(objectBuilder);
+        }
+      }
+      jsonBuilder.add(KEY_BANKS, bankArrayBuilder);
     }
   }
 
@@ -64,6 +85,10 @@ public abstract class UserViewable extends AbstractModel {
       mPostCode = jsonObject.getString(KEY_POST_CODE, null);
       mProvince = jsonObject.getString(KEY_PROVINCE, null);
     }
+  }
+
+  public void setBankData(List<BankConnection> bankConnections) {
+    mBankConnections = bankConnections;
   }
 
   public void setUserData(String name, String address1, String address2, String address3,

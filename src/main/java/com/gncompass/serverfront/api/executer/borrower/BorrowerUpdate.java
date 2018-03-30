@@ -45,7 +45,7 @@ public class BorrowerUpdate extends AbstractExecuter {
       // Update database
       if(borrower.updateDatabase()) {
         HttpHelper.setResponseSuccess(response, HttpServletResponse.SC_OK,
-                                      borrower.getViewable().toJson());
+                                      borrower.getViewable(false).toJson());
       } else {
         HttpHelper.setResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
             1302, "The borrower failed to be updated to the new information");
