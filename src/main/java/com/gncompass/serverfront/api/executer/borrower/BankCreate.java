@@ -44,10 +44,11 @@ public class BankCreate extends AbstractExecuter {
     }
 
     // Validate the bank requested
+    Bank bank = null;
     if (next) {
       next = false;
 
-      Bank bank = new Bank().getBank(mBankRequest.mBankId, borrower.mCountryId);
+      bank = new Bank().getBank(mBankRequest.mBankId, borrower.mCountryId);
       if (bank != null) {
         next = true;
       } else {
@@ -59,9 +60,11 @@ public class BankCreate extends AbstractExecuter {
     // Create the bank connection
     if (next) {
       BankConnection bankConnection = new BankConnection(mBankRequest);
+      bankConnection.mBank = bank;
       if (bankConnection.addToDatabase(borrower)) {
         // Created
-        HttpHelper.setResponseSuccess(response, HttpServletResponse.SC_CREATED, null);
+        HttpHelper.setResponseSuccess(response, HttpServletResponse.SC_CREATED,
+                                      bankConnection.getApiSummary().toJson());
       } else {
         // Failed to create
         HttpHelper.setResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
