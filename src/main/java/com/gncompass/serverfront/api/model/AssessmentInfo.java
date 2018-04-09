@@ -1,5 +1,6 @@
 package com.gncompass.serverfront.api.model;
 
+import com.gncompass.serverfront.db.model.Rating;
 import com.gncompass.serverfront.util.StringHelper;
 
 import java.util.ArrayList;
@@ -19,6 +20,7 @@ public class AssessmentInfo extends AbstractModel {
   private static final String KEY_UPDATED = "updated";
   private static final String KEY_STATUS = "status";
   private static final String KEY_RATING = "rating";
+  private static final String KEY_RATE = "rate";
   private static final String KEY_UPLOAD_PATH = "upload_path";
   private static final String KEY_FILES = "files";
   private static final Logger LOG = Logger.getLogger(AssessmentInfo.class.getName());
@@ -28,6 +30,7 @@ public class AssessmentInfo extends AbstractModel {
   public long mUpdatedTime = 0L;
   public int mStatusId = 0;
   public int mRatingId = 0;
+  public double mRate = 0.0d;
   public String mUploadPath = null;
   private List<AssessmentFile> mFiles = new ArrayList<>();
 
@@ -57,6 +60,10 @@ public class AssessmentInfo extends AbstractModel {
     return false;
   }
 
+  public void addRatingInfo(Rating rating) {
+    mRate = rating.mLoanRate;
+  }
+
   @Override
   protected void addToJson(JsonObjectBuilder jsonBuilder) {
     if (mReference != null) {
@@ -67,6 +74,9 @@ public class AssessmentInfo extends AbstractModel {
     jsonBuilder.add(KEY_STATUS, mStatusId);
     if (mRatingId > 0) {
       jsonBuilder.add(KEY_RATING, mRatingId);
+    }
+    if (mRate > 0.0d) {
+      jsonBuilder.add(KEY_RATE, mRate);
     }
     if (mUploadPath != null) {
       jsonBuilder.add(KEY_UPLOAD_PATH, mUploadPath);
@@ -98,6 +108,7 @@ public class AssessmentInfo extends AbstractModel {
       mUpdatedTime = getLongFromJson(jsonObject, KEY_UPDATED, 0L);
       mStatusId = jsonObject.getInt(KEY_STATUS, 0);
       mRatingId = jsonObject.getInt(KEY_RATING, 0);
+      mRate = getDoubleFromJson(jsonObject, KEY_RATE, 0.0d);
       mUploadPath = jsonObject.getString(KEY_UPLOAD_PATH, null);
 
       mFiles.clear();

@@ -68,6 +68,7 @@ public class Assessment extends AbstractObject {
   // Internals
   private List<AssessmentFile> mAssessmentFiles = new ArrayList<>();
   public UUID mReferenceUuid = null;
+  public Rating mRating = null;
 
   public Assessment() {
   }
@@ -118,6 +119,7 @@ public class Assessment extends AbstractObject {
     if (reference != null) {
       selectBuilder.where(getColumn(REFERENCE) + "=" + UuidHelper.getHexFromUUID(reference, true));
     }
+    Rating.join(selectBuilder, getColumn(RATING));
     return selectBuilder;
   }
 
@@ -155,7 +157,15 @@ public class Assessment extends AbstractObject {
     mStatusId = resultSet.getInt(getColumn(STATUS));
     mRatingId = resultSet.getInt(getColumn(RATING));
 
+    // Determine the reference
     mReferenceUuid = UuidHelper.getUUIDFromBytes(mReference);
+
+    // Check for a rating, if approved
+    if (mStatusId == Status.APPROVED.getValue()) {
+      mRating = new Rating(resultSet);
+    } else {
+      mRating = null;
+    }
   }
 
   /*=============================================================
@@ -245,6 +255,10 @@ public class Assessment extends AbstractObject {
                                 mRatingId, uploadUrl);
     } else {
       info = new AssessmentInfo(mRegisteredTime, mUpdatedTime, mStatusId, mRatingId, uploadUrl);
+    }
+
+    if (mRating != null) {
+      info.addRatingInfo(mRating);
     }
 
     for (AssessmentFile file : mAssessmentFiles) {

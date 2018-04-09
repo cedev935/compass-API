@@ -41,6 +41,18 @@ public abstract class AbstractModel {
     return content;
   }
 
+  protected double getDoubleFromJson(JsonObject json, String key, double defaultValue) {
+    try {
+      JsonNumber jsonValue = json.getJsonNumber(key);
+      if (jsonValue != null) {
+        return jsonValue.numberValue().doubleValue();
+      }
+    } catch (ClassCastException cce) {
+      // Ignore and fall through
+    }
+    return defaultValue;
+  }
+
   protected long getLongFromJson(JsonObject json, String key, long defaultValue) {
     try {
       JsonNumber jsonValue = json.getJsonNumber(key);
