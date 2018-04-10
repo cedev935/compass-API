@@ -4,6 +4,7 @@ import com.gncompass.serverfront.api.executer.AbstractExecuter;
 import com.gncompass.serverfront.api.executer.CountriesGet;
 import com.gncompass.serverfront.api.executer.CountryBanksGet;
 import com.gncompass.serverfront.api.executer.LoanAmortizationsGet;
+import com.gncompass.serverfront.api.executer.LoanFrequenciesGet;
 import com.gncompass.serverfront.api.executer.UploadedAssessmentFile;
 import com.gncompass.serverfront.util.HttpHelper.RequestType;
 
@@ -21,6 +22,7 @@ public abstract class GeneralParser {
   private static final String TYPE_AMORTIZATIONS = "amortizations";
   private static final String TYPE_ASSESSMENTS = "assessments";
   private static final String TYPE_BANKS = "banks";
+  private static final String TYPE_FREQUENCIES = "frequencies";
 
   public static void parseRequest(String function, List<String> pathChunks, RequestType type,
                                   HttpServletRequest request, HttpServletResponse response)
@@ -48,6 +50,10 @@ public abstract class GeneralParser {
           if (loansType.equals(TYPE_AMORTIZATIONS)) {
             if (type == RequestType.GET) {
               executer = new LoanAmortizationsGet();
+            }
+          } else if (loansType.equals(TYPE_FREQUENCIES)) {
+            if (type == RequestType.GET) {
+              executer = new LoanFrequenciesGet();
             }
           }
         }
