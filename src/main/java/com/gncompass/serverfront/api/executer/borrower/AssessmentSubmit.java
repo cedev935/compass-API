@@ -53,6 +53,11 @@ public class AssessmentSubmit extends AbstractExecuter {
     if (next) {
       if (assessment.canBeSubmitted()) {
         if (assessment.submit()) {
+          // Approve the assessment
+          // TODO: REMOVE! This is only for testing. Remove once entering into production
+          assessment.approveRandomly();
+
+          // Return a successful response
           HttpHelper.setResponseSuccess(response, null);
         } else {
           HttpHelper.setResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,

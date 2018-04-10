@@ -20,6 +20,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class Assessment extends AbstractObject {
   // Database name
@@ -206,6 +207,33 @@ public class Assessment extends AbstractObject {
     }
 
     return false;
+  }
+
+  /**
+   * Randomly approves the assessment. This is only temporary until production release with manual
+   * approvals.
+   * TODO: REMOVE! In Future
+   */
+  public void approveRandomly() {
+    // Determine the random rating
+    int ratingMin = 1;
+    int ratingMax = 5;
+    int rating = ThreadLocalRandom.current().nextInt(ratingMin, ratingMax + 1);
+
+    // The update statement
+    String updateSql = new UpdateBuilder(getTable())
+        .set(getColumn(STATUS) + "=" + Integer.toString(Status.APPROVED.getValue()))
+        .set(getColumn(RATING) + "=" + Integer.toString(rating))
+        .set(getColumn(UPDATED) + "=NOW()")
+        .where(getColumn(ID) + "=" + Long.toString(mId))
+        .toString();
+
+    // Execute the update statement
+    try (Connection conn = SQLManager.getConnection()) {
+      conn.prepareStatement(updateSql).executeUpdate();
+    } catch (SQLException e) {
+      throw new RuntimeException("Unable to update the assessment to randomly approve with SQL", e);
+    }
   }
 
   /**
