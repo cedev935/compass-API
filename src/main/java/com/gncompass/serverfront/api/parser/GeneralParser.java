@@ -3,6 +3,7 @@ package com.gncompass.serverfront.api.parser;
 import com.gncompass.serverfront.api.executer.AbstractExecuter;
 import com.gncompass.serverfront.api.executer.CountriesGet;
 import com.gncompass.serverfront.api.executer.CountryBanksGet;
+import com.gncompass.serverfront.api.executer.LoanAmortizationsGet;
 import com.gncompass.serverfront.api.executer.UploadedAssessmentFile;
 import com.gncompass.serverfront.util.HttpHelper.RequestType;
 
@@ -15,7 +16,9 @@ import javax.servlet.ServletException;
 
 public abstract class GeneralParser {
   private static final String FUNCTION_COUNTRIES = "countries";
+  private static final String FUNCTION_LOANS = "loans";
   private static final String FUNCTION_UPLOADS = "uploads";
+  private static final String TYPE_AMORTIZATIONS = "amortizations";
   private static final String TYPE_ASSESSMENTS = "assessments";
   private static final String TYPE_BANKS = "banks";
 
@@ -35,6 +38,16 @@ public abstract class GeneralParser {
           if (pathChunks.get(1).equals(TYPE_BANKS)) {
             if (type == RequestType.GET) {
               executer = new CountryBanksGet(pathChunks.get(0));
+            }
+          }
+        }
+        break;
+      case FUNCTION_LOANS:
+        if (pathChunks.size() == 1) {
+          String loansType = pathChunks.get(0);
+          if (loansType.equals(TYPE_AMORTIZATIONS)) {
+            if (type == RequestType.GET) {
+              executer = new LoanAmortizationsGet();
             }
           }
         }
