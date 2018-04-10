@@ -15,6 +15,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class Borrower extends User {
   // Database name
@@ -322,6 +323,33 @@ public class Borrower extends User {
   public boolean matches(String userReference) {
     // TODO: Should it cache the string UUID to make comparisons faster?
     return (mReferenceUuid != null && mReferenceUuid.equals(UUID.fromString(userReference)));
+  }
+
+  /**
+   * Randomly assigns a loan cap to the borrower if one has not been provided already. This is only
+   * temporary until production release with manual assessment approvals
+   * TODO: REMOVE! In Future
+   */
+  public void randomLoanCap() {
+    if (mLoanCap <= 0.0f) {
+      // Determine the random rating
+      int loanMin = 1;
+      int loanMax = 5;
+      int loanCap = ThreadLocalRandom.current().nextInt(loanMin, loanMax + 1) * 10000;
+
+      // The update statement
+      String updateSql = new UpdateBuilder(getTable())
+          .set(getColumn(LOAN_CAP) + "=" + Integer.toString(loanCap))
+          .where(getColumn(ID) + "=" + Long.toString(mId))
+          .toString();
+
+      // Execute the update statement
+      try (Connection conn = SQLManager.getConnection()) {
+        conn.prepareStatement(updateSql).executeUpdate();
+      } catch (SQLException e) {
+        throw new RuntimeException("Unable to update the borrower to randomly provide a loan cap with SQL", e);
+      }
+    }
   }
 
   /**

@@ -53,9 +53,10 @@ public class AssessmentSubmit extends AbstractExecuter {
     if (next) {
       if (assessment.canBeSubmitted()) {
         if (assessment.submit()) {
-          // Approve the assessment
+          // Approve the assessment and assign the loan cap
           // TODO: REMOVE! This is only for testing. Remove once entering into production
           assessment.approveRandomly();
+          borrower.randomLoanCap();
 
           // Return a successful response
           HttpHelper.setResponseSuccess(response, null);
