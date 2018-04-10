@@ -1,6 +1,7 @@
 package com.gncompass.serverfront.api.parser;
 
 import com.gncompass.serverfront.api.executer.AbstractExecuter;
+import com.gncompass.serverfront.api.executer.borrower.AssessmentApproved;
 import com.gncompass.serverfront.api.executer.borrower.AssessmentCreate;
 import com.gncompass.serverfront.api.executer.borrower.AssessmentFile;
 import com.gncompass.serverfront.api.executer.borrower.AssessmentInfo;
@@ -24,6 +25,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.ServletException;
 
 public abstract class BorrowerParser {
+  private static final String PATH_APPROVED = "approved";
   private static final String PATH_ASSESSMENTS = "assessments";
   private static final String PATH_BANKS = "banks";
   private static final String PATH_LOGIN = "login";
@@ -138,7 +140,11 @@ public abstract class BorrowerParser {
       assessmentUuid = pathChunks.remove(0);
 
       if (pathChunks.size() == 0) {
-        if (type == RequestType.GET) {
+        if (assessmentUuid.equals(PATH_APPROVED)) {
+          if (type == RequestType.GET) {
+            executer = new AssessmentApproved(borrowerUuid);
+          }
+        } else if (type == RequestType.GET) {
           executer = new AssessmentInfo(borrowerUuid, assessmentUuid);
         } else if (type == RequestType.POST) {
           executer = new AssessmentSubmit(borrowerUuid, assessmentUuid);

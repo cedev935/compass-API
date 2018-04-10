@@ -207,14 +207,14 @@ public class SelectBuilder extends AbstractBuilder {
   /**
    * Adds an ORDER BY item with a direction indicator.
    * @param name Name of the column by which to sort.
-   * @param ascending If true, specifies the direction "asc", otherwise, specifies
-                      the direction "desc".
+   * @param ascending If true, specifies the direction "ASC", otherwise, specifies
+                      the direction "DESC".
    */
   public SelectBuilder orderBy(String name, boolean ascending) {
     if (ascending) {
-      orderBys.add(name + " asc");
+      orderBys.add(name + " ASC");
     } else {
-      orderBys.add(name + " desc");
+      orderBys.add(name + " DESC");
     }
     return this;
   }

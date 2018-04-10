@@ -349,6 +349,41 @@ public class Assessment extends AbstractObject {
   }
 
   /**
+   * Fetches the last approved assessment information from the database
+   * @param borrower the borrower object to fetch for
+   * @return the assessment object with the information fetched. If not found, return NULL
+   */
+  public Assessment getLastApproved(Borrower borrower) {
+    // Build the query
+    String selectSql = buildSelectSql(borrower, null)
+        .where(getColumn(STATUS) + "=" + Integer.toString(Status.APPROVED.getValue()))
+        .orderBy(getColumn(ID), false)
+        .limit(1)
+        .toString();
+
+    // Try to execute against the connection
+    try (Connection conn = SQLManager.getConnection()) {
+      try (ResultSet rs = conn.prepareStatement(selectSql).executeQuery()) {
+        if (rs.next()) {
+          // Update core data
+          updateFromFetch(rs);
+
+          // Attempt to fetch the files
+          mAssessmentFiles.clear();
+          mAssessmentFiles.addAll(AssessmentFile.getAllForAssessment(conn, this));
+
+          return this;
+        }
+      }
+    } catch (SQLException e) {
+      throw new RuntimeException(
+                        "Unable to fetch the last approved assessment reference with SQL", e);
+    }
+
+    return null;
+  }
+
+  /**
    * Returns the table name of the class
    * @return the object table name
    */
