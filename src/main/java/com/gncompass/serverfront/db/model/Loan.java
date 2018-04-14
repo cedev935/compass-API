@@ -3,10 +3,11 @@ package com.gncompass.serverfront.db.model;
 import com.gncompass.serverfront.api.model.LoanSummary;
 import com.gncompass.serverfront.db.SelectBuilder;
 import com.gncompass.serverfront.db.SQLManager;
+import com.gncompass.serverfront.util.Currency;
 import com.gncompass.serverfront.util.UuidHelper;
 
-import java.sql.Date;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -37,7 +38,7 @@ public class Loan extends AbstractObject {
   //public long mBorrowerId = 0;
   public Timestamp mCreated = null;
   //public int mBankId = 0;
-  public double mPrincipal = 0.0d;
+  public Currency mPrincipal = null;
   public int mRatingId = 0;
   public double mRate = 0.0d;
   //public int mAmortizationId = 0;
@@ -45,7 +46,12 @@ public class Loan extends AbstractObject {
   public Date mStartDate = null;
 
   // Internals
+  public List<LoanPayment> mLoanPayments = null;
   public UUID mReferenceUuid = null;
+
+  // Calculated
+  public Currency mBalance = null;
+  public LoanPayment mNextPayment = null;
 
   public Loan() {
   }
@@ -97,6 +103,51 @@ public class Loan extends AbstractObject {
         .column(getColumn(START_DATE));
   }
 
+  /**
+   * Calculates the pending balance information about the loan using the existing available
+   * fetched info
+   * TODO: This should add accumulated interest for overdo payments
+   */
+  private void calculateBalance() {
+    if (mLoanPayments != null) {
+      Currency principalPaid = new Currency();
+      Currency amountDue = new Currency();
+      Currency interestDue = new Currency();
+      LoanPayment lastPayment = null;
+
+      // Run through all the existing payments
+      for (LoanPayment lp : mLoanPayments) {
+        if (lp.isPaid()) {
+          principalPaid = principalPaid.add(lp.getPrincipal());
+        } else {
+          amountDue = amountDue.add(lp.mAmount);
+          interestDue = interestDue.add(lp.mInterest);
+          lastPayment = lp;
+        }
+      }
+
+      // Tally and cache
+      mBalance = mPrincipal.subtract(principalPaid);
+      if (mBalance.lessThanZero()) {
+        mBalance.setToZero();
+      }
+      if (lastPayment != null) {
+        mNextPayment = new LoanPayment(amountDue, interestDue, lastPayment.mDueDate);
+      } else {
+        mNextPayment = null;
+      }
+    }
+  }
+
+  /**
+   * Fetches all payments tied to this particular loan and stores them in the class
+   * @param conn the connection to fetch with
+   * @throws SQLException exception on fetch failure
+   */
+  private void fetchAllPayments(Connection conn) throws SQLException {
+    mLoanPayments = LoanPayment.getAllForLoan(conn, this);
+  }
+
   /*=============================================================
    * PROTECTED FUNCTIONS
    *============================================================*/
@@ -112,7 +163,7 @@ public class Loan extends AbstractObject {
     mId = resultSet.getLong(getColumn(ID));
     mReference = resultSet.getBytes(getColumn(REFERENCE));
     mCreated = resultSet.getTimestamp(getColumn(CREATED));
-    mPrincipal = resultSet.getFloat(getColumn(PRINCIPAL));
+    mPrincipal = new Currency(resultSet.getDouble(getColumn(PRINCIPAL)));
     mRatingId = resultSet.getInt(getColumn(RATING));
     mRate = resultSet.getDouble(getColumn(RATE));
     mStartDate = resultSet.getDate(getColumn(START_DATE));
@@ -130,10 +181,21 @@ public class Loan extends AbstractObject {
    * @return the API summary for a loan
    */
   public LoanSummary getApiSummary() {
-    LoanSummary loanSummary = new LoanSummary(mReferenceUuid.toString(), mPrincipal, mRate);
+    LoanSummary loanSummary = new LoanSummary(
+                                      mReferenceUuid.toString(), mPrincipal.doubleValue(), mRate);
     if (mStartDate != null) {
       loanSummary.mStartedTime = mStartDate.getTime();
-      //loanSummary.mBalance = calculateBalance();
+
+      // Balance
+      calculateBalance();
+      if (mBalance != null) {
+        loanSummary.mBalance = mBalance.doubleValue();
+      }
+
+      // Next Payment
+      if (mNextPayment != null) {
+        // TODO!
+      }
     }
     return loanSummary;
   }
@@ -166,7 +228,9 @@ public class Loan extends AbstractObject {
     try (Connection conn = SQLManager.getConnection()) {
       try (ResultSet rs = conn.prepareStatement(selectSql).executeQuery()) {
         while (rs.next()) {
-          loans.add(new Loan(rs));
+          Loan loan = new Loan(rs);
+          loan.fetchAllPayments(conn);
+          loans.add(loan);
         }
       }
     } catch (SQLException e) {

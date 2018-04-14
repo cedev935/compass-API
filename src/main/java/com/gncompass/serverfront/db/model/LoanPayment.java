@@ -1,0 +1,177 @@
+package com.gncompass.serverfront.db.model;
+
+import com.gncompass.serverfront.db.SelectBuilder;
+import com.gncompass.serverfront.util.Currency;
+
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+public class LoanPayment extends TransactionDetail {
+  // Database name
+  private static final String TABLE_NAME = "LoanPayments";
+
+  // Database column names
+  private static final String ID = "id";
+  private static final String TYPE = "type";
+  private static final String LOAN = "loan";
+  private static final String INTEREST = "interest";
+  private static final String DUE_DATE = "due_date";
+
+  // Database parameters
+  //public long mId = 0L;
+  //public int mType = 0;
+  //public long mLoanId = 0L;
+  public Currency mInterest = null;
+  public Date mDueDate = null;
+
+  public LoanPayment() {
+  }
+
+  public LoanPayment(ResultSet rs) throws SQLException {
+    updateFromFetch(rs);
+  }
+
+  public LoanPayment(Currency amount, Currency interest, Date dueDate) {
+    super(amount);
+    mInterest = interest;
+    mDueDate = dueDate;
+  }
+
+  /*=============================================================
+   * PRIVATE FUNCTIONS
+   *============================================================*/
+
+   /**
+    * Build the select SQL for all properties related to the loan payment for a tied loan
+    * @param loan the loan that determines which payments to display
+    * @return the SelectBuilder reference object
+    */
+  private SelectBuilder buildSelectSql(Loan loan) {
+    return buildSelectSql(loan, false, null);
+  }
+
+  /**
+   * Build the select SQL for all properties related to the loan payment. Allows for choosing
+   * between JOIN or FROM for how this table is connected
+   * @param loan the loan that determines which payments to display
+   * @param isJoin TRUE if is JOIN. FALSE if is FROM
+   * @param joinIdColumn if JOIN, a join id column defines the matching ON column to join for the
+   *                     parent ID
+   * @return the SelectBuilder reference object
+   */
+  private SelectBuilder buildSelectSql(Loan loan, boolean isJoin, String joinIdColumn) {
+    SelectBuilder selectBuilder =
+        super.buildSelectParentSql(getColumn(ID), getColumn(TYPE), isJoin ? joinIdColumn : null)
+        //.column(getColumn(ID))
+        //.column(getColumn(TYPE))
+        //.column(getColumn(LOAN))
+        .column(getColumn(INTEREST))
+        .column(getColumn(DUE_DATE));
+
+    // Where and core join/from
+    String primaryWhere = getColumn(LOAN) + "=" + Long.toString(loan.mId);
+    if (isJoin) {
+      selectBuilder
+          .join(getTable(), primaryWhere, true);
+    } else {
+      selectBuilder
+          .from(getTable())
+          .where(primaryWhere);
+    }
+
+    // Ordering and return
+    return selectBuilder.orderBy(getColumn(DUE_DATE));
+  }
+
+  /*=============================================================
+   * PROTECTED FUNCTIONS
+   *============================================================*/
+
+  /**
+   * Returns the table name of the class
+   * @return the object table name
+   */
+  @Override
+  protected String getTable() {
+    return TABLE_NAME;
+  }
+
+  /*=============================================================
+   * PACKAGE-PRIVATE FUNCTIONS
+   *============================================================*/
+
+  /**
+   * Updates the loan payment info from the result set provided. This assumes it was fetched
+   * appropriately by the SQL function
+   * @param resultSet the result set to pull the data from. This will not call .next()
+   * @throws SQLException if the data is unexpected in the result set
+   */
+  @Override
+  void updateFromFetch(ResultSet resultSet) throws SQLException {
+    super.updateFromFetch(resultSet);
+
+    //mId = resultSet.getLong(getColumn(ID));
+    //mType = resultSet.getInt(getColumn(TYPE));
+    //mLoanId = resultSet.getLong(getColumn(LOAN));
+    mInterest = new Currency(resultSet.getDouble(getColumn(INTEREST)));
+    mDueDate = resultSet.getDate(getColumn(DUE_DATE));
+  }
+
+  /*=============================================================
+   * PUBLIC FUNCTIONS
+   *============================================================*/
+
+  /**
+   * Returns the principal portion of this payment
+   * @return the principal portion
+   */
+  public Currency getPrincipal() {
+    if (mAmount != null && mInterest != null) {
+      Currency principal = mAmount.subtract(mInterest);
+      if (!principal.lessThanZero()) {
+        return principal;
+      }
+    }
+    return new Currency();
+  }
+
+  /**
+   * Returns the transaction type of this loan payment
+   * @return the transaction type enum
+   */
+  @Override
+  public TransactionType getTransactionType() {
+    return TransactionType.LOAN_PAYMENT;
+  }
+
+  /*=============================================================
+   * STATIC FUNCTIONS
+   *============================================================*/
+
+  /**
+   * Fetches the list of all loan payments for the provided loan. It is ordered by the due date
+   * @param conn the connection to fetch the payment info through
+   * @param loan the loan object to fetch for
+   * @return the stack of loan payments tied to the loan. Empty list if none found
+   * @throws SQLException exception on failed fetch
+   */
+  public static List<LoanPayment> getAllForLoan(Connection conn, Loan loan) throws SQLException {
+    List<LoanPayment> loanPayments = new ArrayList<>();
+
+    // Build the query
+    String selectSql = new LoanPayment().buildSelectSql(loan).toString();
+
+    // Try to execute against the connection
+    try (ResultSet rs = conn.prepareStatement(selectSql).executeQuery()) {
+      while (rs.next()) {
+        loanPayments.add(new LoanPayment(rs));
+      }
+    }
+
+    return loanPayments;
+  }
+}
