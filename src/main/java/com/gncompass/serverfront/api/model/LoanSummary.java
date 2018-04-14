@@ -74,7 +74,10 @@ public class LoanSummary extends AbstractModel {
         mBalance = null;
       }
 
-      // Add in next payment pull
+      mNextPayment = new LoanPayment(jsonObject);
+      if (!mNextPayment.isValid()) {
+        mNextPayment = null;
+      }
     }
   }
 }
