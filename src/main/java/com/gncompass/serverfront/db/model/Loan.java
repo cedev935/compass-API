@@ -194,7 +194,7 @@ public class Loan extends AbstractObject {
 
       // Next Payment
       if (mNextPayment != null) {
-        // TODO!
+        loanSummary.mNextPayment = mNextPayment.getApiModel();
       }
     }
     return loanSummary;

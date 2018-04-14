@@ -126,6 +126,18 @@ public class LoanPayment extends TransactionDetail {
    *============================================================*/
 
   /**
+   * Returns the API model relating to the database model
+   * @return the API model for a loan payment
+   */
+  public com.gncompass.serverfront.api.model.LoanPayment getApiModel() {
+    com.gncompass.serverfront.api.model.LoanPayment loanPayment =
+            new com.gncompass.serverfront.api.model.LoanPayment(mInterest.doubleValue(),
+                                                                mDueDate.getTime());
+    updateModelFromParent(loanPayment);
+    return loanPayment;
+  }
+
+  /**
    * Returns the principal portion of this payment
    * @return the principal portion
    */

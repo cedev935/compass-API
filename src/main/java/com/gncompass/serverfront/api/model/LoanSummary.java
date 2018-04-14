@@ -10,7 +10,7 @@ import javax.servlet.http.HttpServletRequest;
 
 public class LoanSummary extends AbstractModel {
   private static final String KEY_BALANCE = "balance";
-  //private static final String KEY_NEXT_PAYMENT = "next_payment";
+  private static final String KEY_NEXT_PAYMENT = "next_payment";
   private static final String KEY_PRINCIPAL = "principal";
   private static final String KEY_RATE = "rate";
   private static final String KEY_REFERENCE = "reference";
@@ -18,7 +18,7 @@ public class LoanSummary extends AbstractModel {
   private static final Logger LOG = Logger.getLogger(LoanSummary.class.getName());
 
   public Double mBalance = null;
-  //public LoanPayment mNextPayment = null;
+  public LoanPayment mNextPayment = null;
   public double mPrincipal = 0.0d;
   public double mRate = 0.0d;
   public String mReference = null;
@@ -43,6 +43,9 @@ public class LoanSummary extends AbstractModel {
       if (mBalance != null && mBalance >= 0.0d) {
         jsonBuilder.add(KEY_BALANCE, mBalance);
       }
+      if (mNextPayment != null) {
+        jsonBuilder.add(KEY_NEXT_PAYMENT, mNextPayment.toJsonBuilder());
+      }
     }
   }
 
@@ -65,10 +68,13 @@ public class LoanSummary extends AbstractModel {
       mPrincipal = getDoubleFromJson(jsonObject, KEY_PRINCIPAL, 0.0d);
       mRate = getDoubleFromJson(jsonObject, KEY_RATE, 0.0d);
       mStartedTime = getLongFromJson(jsonObject, KEY_STARTED, 0L);
+
       mBalance = getDoubleFromJson(jsonObject, KEY_BALANCE, -1.0d);
       if (mBalance < 0.0d) {
         mBalance = null;
       }
+
+      // Add in next payment pull
     }
   }
 }

@@ -101,6 +101,16 @@ public abstract class TransactionDetail extends AbstractObject {
     return TABLE_NAME;
   }
 
+  /**
+   * Updates the api model data set with the transaction detail data available in this parent
+   * @param apiModel the api model data set
+   */
+  protected void updateModelFromParent(
+                                com.gncompass.serverfront.api.model.TransactionDetail apiModel) {
+    apiModel.setTransactionData(mAmount.doubleValue(),
+                                mPaidDate != null ? mPaidDate.getTime() : 0L);
+  }
+
   /*=============================================================
    * PACKAGE-PRIVATE FUNCTIONS
    *============================================================*/
