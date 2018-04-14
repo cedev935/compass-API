@@ -15,6 +15,7 @@ import com.gncompass.serverfront.api.executer.borrower.BorrowerInfo;
 import com.gncompass.serverfront.api.executer.borrower.BorrowerLogin;
 import com.gncompass.serverfront.api.executer.borrower.BorrowerLogout;
 import com.gncompass.serverfront.api.executer.borrower.BorrowerUpdate;
+import com.gncompass.serverfront.api.executer.borrower.LoanList;
 import com.gncompass.serverfront.util.HttpHelper.RequestType;
 
 import java.io.IOException;
@@ -28,6 +29,7 @@ public abstract class BorrowerParser {
   private static final String PATH_APPROVED = "approved";
   private static final String PATH_ASSESSMENTS = "assessments";
   private static final String PATH_BANKS = "banks";
+  private static final String PATH_LOANS = "loans";
   private static final String PATH_LOGIN = "login";
   private static final String PATH_LOGOUT = "logout";
   public static final String PATH_MAIN = "borrowers";
@@ -90,6 +92,9 @@ public abstract class BorrowerParser {
           break;
         case PATH_BANKS:
           executer = parseRequestForBanks(level2Chunk, pathChunks, type, request);
+          break;
+        case PATH_LOANS:
+          executer = parseRequestForLoans(level2Chunk, pathChunks, type, request);
           break;
         case PATH_LOGOUT:
           if (pathChunks.size() == 0 && type == RequestType.POST) {
@@ -202,6 +207,48 @@ public abstract class BorrowerParser {
       if (pathChunks.size() == 0) {
         if (type == RequestType.GET) {
           executer = new BankInfo(borrowerUuid, bankUuid);
+        }
+      }
+    }
+
+    return executer;
+  }
+
+  /**
+   * Parse request for the borrower loans section. Separated from the main for clarity
+   * @param borrowerUuid the borrower reference
+   * @param pathChunks the separated list of the path
+   * @param type the type of request (GET, POST, etc)
+   * @param request the request data received
+   * @return the abstract executer to call for the path requested. NULL if not found
+   */
+  private static AbstractExecuter parseRequestForLoans(String borrowerUuid,
+                                                       List<String> pathChunks,
+                                                       RequestType type,
+                                                       HttpServletRequest request) {
+    AbstractExecuter executer = null;
+    boolean nextLevel = false;
+
+    // Level 1: /loans
+    if (pathChunks.size() == 0) {
+      if (type == RequestType.GET) {
+        executer = new LoanList(borrowerUuid);
+      } else if (type == RequestType.POST) {
+        //executer = new LoanCreate(borrowerUuid);
+      }
+    } else {
+      nextLevel = true;
+    }
+
+    // Level 2: /loans/{loanUuid}
+    String loanUuid = null;
+    if (nextLevel) {
+      nextLevel = false;
+      loanUuid = pathChunks.remove(0);
+
+      if (pathChunks.size() == 0) {
+        if (type == RequestType.GET) {
+          //executer = new LoanInfo(borrowerUuid, loanUuid);
         }
       }
     }

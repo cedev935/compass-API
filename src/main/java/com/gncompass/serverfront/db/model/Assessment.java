@@ -436,9 +436,9 @@ public class Assessment extends AbstractObject {
   }
 
   /**
-   * Fetches the list of all assessments for the provided user
-   * @param user the user object to fetch for
-   * @return the stack of assessments tied to the user. Empty list if none found
+   * Fetches the list of all assessments for the provided borrower
+   * @param borrower the borrower object to fetch for
+   * @return the stack of assessments tied to the borrower. Empty list if none found
    */
   public static List<Assessment> getAllForBorrower(Borrower borrower) {
     List<Assessment> assessments = new ArrayList<>();
