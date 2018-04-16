@@ -65,6 +65,21 @@ public class BankConnection extends AbstractObject {
    *============================================================*/
 
   /**
+   * Adds the columns to the select builder provided
+   * @param selectBuilder the select builder to add to
+   * @return the modified select builder
+   */
+  private SelectBuilder addColumns(SelectBuilder selectBuilder) {
+    return selectBuilder.column(getColumn(ID))
+            .column(getColumn(REFERENCE))
+            .column(getColumn(LOGIN_ID))
+            .column(getColumn(ENABLED))
+            .column(getColumn(INSTITUTION))
+            .column(getColumn(TRANSIT))
+            .column(getColumn(ACCOUNT));
+  }
+
+  /**
    * Build the select SQL for all properties related to the bank connection
    * @param user the user reference
    * @param reference the bank connection UUID reference
@@ -84,15 +99,21 @@ public class BankConnection extends AbstractObject {
    * @return the SelectBuilder reference object
    */
   private SelectBuilder buildSelectSql() {
-    SelectBuilder selectBuilder = new SelectBuilder(getTable())
-        .column(getColumn(ID))
-        .column(getColumn(REFERENCE))
-        .column(getColumn(LOGIN_ID))
-        .column(getColumn(ENABLED))
-        .column(getColumn(INSTITUTION))
-        .column(getColumn(TRANSIT))
-        .column(getColumn(ACCOUNT));
+    SelectBuilder selectBuilder = addColumns(new SelectBuilder(getTable()));
     return Bank.join(selectBuilder, getColumn(INSTITUTION));
+  }
+
+  /**
+   * Adds a join statement to the select builder provided connecting the bank connection table to
+   * the caller. This is the internal function
+   * @param selectBuilder the select builder to add the join information to
+   * @param bankIdColumn the column in the main table that will tie to the ID index column
+   * @return the select builder returned with the modifications
+   */
+  private SelectBuilder joinToSelect(SelectBuilder selectBuilder, String bankIdColumn) {
+    SelectBuilder selectBuilderMod =
+                  addColumns(selectBuilder.join(getTable(), getColumn(ID) + "=" + bankIdColumn));
+    return Bank.join(selectBuilderMod, getColumn(INSTITUTION));
   }
 
   /*=============================================================
@@ -232,5 +253,16 @@ public class BankConnection extends AbstractObject {
     }
 
     return bankConnections;
+  }
+
+  /**
+   * Adds a join statement to the select builder provided connecting the bank connection table to
+   * the caller
+   * @param selectBuilder the select builder to add the join information to
+   * @param bankIdColumn the column in the main table that will tie to the ID index column
+   * @return the select builder returned with the modifications
+   */
+  static SelectBuilder join(SelectBuilder selectBuilder, String bankIdColumn) {
+    return new BankConnection().joinToSelect(selectBuilder, bankIdColumn);
   }
 }

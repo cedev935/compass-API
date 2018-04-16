@@ -35,14 +35,33 @@ public class LoanAmortization extends AbstractObject {
    *============================================================*/
 
   /**
+   * Adds the columns to the select builder provided
+   * @param selectBuilder the select builder to add to
+   * @return the modified select builder
+   */
+  private SelectBuilder addColumns(SelectBuilder selectBuilder) {
+    return selectBuilder.column(getColumn(ID))
+        .column(getColumn(NAME))
+        .column(getColumn(MONTHS));
+  }
+
+  /**
    * Build the select SQL for all properties related to all loan amortizations
    * @return the SelectBuilder reference object
    */
   private SelectBuilder buildSelectSql() {
-    return new SelectBuilder(getTable())
-        .column(getColumn(ID))
-        .column(getColumn(NAME))
-        .column(getColumn(MONTHS));
+    return addColumns(new SelectBuilder(getTable()));
+  }
+
+  /**
+   * Adds a join statement to the select builder provided connecting the amortization table to
+   * the caller. This is the internal function
+   * @param selectBuilder the select builder to add the join information to
+   * @param amortizationIdColumn the column in the main table that will tie to the ID index column
+   * @return the select builder returned with the modifications
+   */
+  private SelectBuilder joinToSelect(SelectBuilder selectBuilder, String amortizationIdColumn) {
+    return addColumns(selectBuilder.join(getTable(), getColumn(ID) + "=" + amortizationIdColumn));
   }
 
   /*=============================================================
@@ -88,14 +107,6 @@ public class LoanAmortization extends AbstractObject {
    *============================================================*/
 
   /**
-   * Returns the select all loan amortizations statement
-   * @return the SelectBuilder reference object
-   */
-  private static SelectBuilder buildSelectAllSql() {
-    return new LoanAmortization().buildSelectSql();
-  }
-
-  /**
    * Fetches all loan amortizations available for creating loans
    * @return the stack of loan amortizations available. Empty list if none found
    */
@@ -103,7 +114,7 @@ public class LoanAmortization extends AbstractObject {
     List<LoanAmortization> loanAmortizations = new ArrayList<>();
 
     // Build the query
-    String selectSql = buildSelectAllSql().toString();
+    String selectSql = new LoanAmortization().buildSelectSql().toString();
 
     // Try to execute against the connection
     try (Connection conn = SQLManager.getConnection()) {
@@ -117,5 +128,16 @@ public class LoanAmortization extends AbstractObject {
     }
 
     return loanAmortizations;
+  }
+
+  /**
+   * Adds a join statement to the select builder provided connecting the amortization table to
+   * the caller
+   * @param selectBuilder the select builder to add the join information to
+   * @param amortizationIdColumn the column in the main table that will tie to the ID index column
+   * @return the select builder returned with the modifications
+   */
+  static SelectBuilder join(SelectBuilder selectBuilder, String amortizationIdColumn) {
+    return new LoanAmortization().joinToSelect(selectBuilder, amortizationIdColumn);
   }
 }

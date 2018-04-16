@@ -44,16 +44,16 @@ public class LoanPayment extends TransactionDetail {
     return (super.isValid() && mInterest > 0.0d && mDueDateTime > 0L);
   }
 
+  @Override
+  public void parse(HttpServletRequest request) {
+    super.parse(request);
+    parse(getContent(request));
+  }
+
   private void parse(JsonObject jsonObject) {
     if(jsonObject != null) {
       mInterest = getDoubleFromJson(jsonObject, KEY_INTEREST, 0.0d);
       mDueDateTime = getLongFromJson(jsonObject, KEY_DUE_DATE, 0L);
     }
-  }
-
-  @Override
-  public void parse(HttpServletRequest request) {
-    super.parse(request);
-    parse(getContent(request));
   }
 }

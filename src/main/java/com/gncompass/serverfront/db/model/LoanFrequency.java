@@ -37,15 +37,34 @@ public class LoanFrequency extends AbstractObject {
    *============================================================*/
 
   /**
+   * Adds the columns to the select builder provided
+   * @param selectBuilder the select builder to add to
+   * @return the modified select builder
+   */
+  private SelectBuilder addColumns(SelectBuilder selectBuilder) {
+    return selectBuilder.column(getColumn(ID))
+        .column(getColumn(NAME))
+        .column(getColumn(DAYS))
+        .column(getColumn(PER_MONTH));
+  }
+
+  /**
    * Build the select SQL for all properties related to all loan frequencies
    * @return the SelectBuilder reference object
    */
   private SelectBuilder buildSelectSql() {
-    return new SelectBuilder(getTable())
-        .column(getColumn(ID))
-        .column(getColumn(NAME))
-        .column(getColumn(DAYS))
-        .column(getColumn(PER_MONTH));
+    return addColumns(new SelectBuilder(getTable()));
+  }
+
+  /**
+   * Adds a join statement to the select builder provided connecting the frequency table to
+   * the caller. This is the internal function
+   * @param selectBuilder the select builder to add the join information to
+   * @param frequencyIdColumn the column in the main table that will tie to the ID index column
+   * @return the select builder returned with the modifications
+   */
+  private SelectBuilder joinToSelect(SelectBuilder selectBuilder, String frequencyIdColumn) {
+    return addColumns(selectBuilder.join(getTable(), getColumn(ID) + "=" + frequencyIdColumn));
   }
 
   /*=============================================================
@@ -92,14 +111,6 @@ public class LoanFrequency extends AbstractObject {
    *============================================================*/
 
   /**
-   * Returns the select all loan frequencies statement
-   * @return the SelectBuilder reference object
-   */
-  private static SelectBuilder buildSelectAllSql() {
-    return new LoanFrequency().buildSelectSql();
-  }
-
-  /**
    * Fetches all loan frequencies available for creating loans
    * @return the stack of loan frequencies available. Empty list if none found
    */
@@ -107,7 +118,7 @@ public class LoanFrequency extends AbstractObject {
     List<LoanFrequency> loanFrequencies = new ArrayList<>();
 
     // Build the query
-    String selectSql = buildSelectAllSql().toString();
+    String selectSql = new LoanFrequency().buildSelectSql().toString();
 
     // Try to execute against the connection
     try (Connection conn = SQLManager.getConnection()) {
@@ -121,5 +132,16 @@ public class LoanFrequency extends AbstractObject {
     }
 
     return loanFrequencies;
+  }
+
+  /**
+   * Adds a join statement to the select builder provided connecting the frequency table to
+   * the caller
+   * @param selectBuilder the select builder to add the join information to
+   * @param frequencyIdColumn the column in the main table that will tie to the ID index column
+   * @return the select builder returned with the modifications
+   */
+  static SelectBuilder join(SelectBuilder selectBuilder, String frequencyIdColumn) {
+    return new LoanFrequency().joinToSelect(selectBuilder, frequencyIdColumn);
   }
 }

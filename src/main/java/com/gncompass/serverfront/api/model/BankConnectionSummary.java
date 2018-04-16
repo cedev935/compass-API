@@ -21,6 +21,10 @@ public class BankConnectionSummary extends AbstractModel {
   public BankConnectionSummary() {
   }
 
+  public BankConnectionSummary(JsonObject jsonObject) {
+    parse(jsonObject);
+  }
+
   public BankConnectionSummary(String reference, int institution, String name) {
     mReference = reference;
     mInstitution = institution;
@@ -48,7 +52,10 @@ public class BankConnectionSummary extends AbstractModel {
 
   @Override
   public void parse(HttpServletRequest request) {
-    JsonObject jsonObject = getContent(request);
+    parse(getContent(request));
+  }
+
+  private void parse(JsonObject jsonObject) {
     if(jsonObject != null) {
       mInstitution = jsonObject.getInt(KEY_INSTITUTION, 0);
       mName = jsonObject.getString(KEY_NAME, null);

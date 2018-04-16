@@ -19,6 +19,10 @@ public class LoanAmortization extends AbstractModel {
   public LoanAmortization() {
   }
 
+  public LoanAmortization(JsonObject jsonObject) {
+    parse(jsonObject);
+  }
+
   public LoanAmortization(long id, String name, int months) {
     mId = id;
     mName = name;
@@ -44,7 +48,10 @@ public class LoanAmortization extends AbstractModel {
 
   @Override
   public void parse(HttpServletRequest request) {
-    JsonObject jsonObject = getContent(request);
+    parse(getContent(request));
+  }
+
+  private void parse(JsonObject jsonObject) {
     if(jsonObject != null) {
       mId = getLongFromJson(jsonObject, KEY_ID, 0L);
       mName = jsonObject.getString(KEY_NAME, null);

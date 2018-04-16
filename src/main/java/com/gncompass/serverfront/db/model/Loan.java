@@ -1,5 +1,6 @@
 package com.gncompass.serverfront.db.model;
 
+import com.gncompass.serverfront.api.model.LoanInfo;
 import com.gncompass.serverfront.api.model.LoanSummary;
 import com.gncompass.serverfront.db.SelectBuilder;
 import com.gncompass.serverfront.db.SQLManager;
@@ -24,12 +25,12 @@ public class Loan extends AbstractObject {
   private static final String REFERENCE = "reference";
   private static final String BORROWER = "borrower";
   private static final String CREATED = "created";
-  //private static final String BANK = "bank";
+  private static final String BANK = "bank";
   private static final String PRINCIPAL = "principal";
   private static final String RATING = "rating";
   private static final String RATE = "rate";
-  //private static final String AMORTIZATION = "amortization";
-  //private static final String FREQUENCY = "frequency";
+  private static final String AMORTIZATION = "amortization";
+  private static final String FREQUENCY = "frequency";
   private static final String START_DATE = "start_date";
 
   // Database parameters
@@ -46,6 +47,9 @@ public class Loan extends AbstractObject {
   public Date mStartDate = null;
 
   // Internals
+  public BankConnection mBankConnection = null;
+  public LoanAmortization mLoanAmortization = null;
+  public LoanFrequency mLoanFrequency = null;
   public List<LoanPayment> mLoanPayments = null;
   public UUID mReferenceUuid = null;
 
@@ -177,6 +181,38 @@ public class Loan extends AbstractObject {
    *============================================================*/
 
   /**
+   * Returns the API info model relating to the database model
+   * @return the API info for a loan
+   */
+  public LoanInfo getApiInfo() {
+    LoanInfo loanInfo = new LoanInfo(mReferenceUuid.toString(), mCreated.getTime(),
+                                     mBankConnection.getApiSummary(), mPrincipal.doubleValue(),
+                                     mRatingId, mRate, mLoanAmortization.getApiModel(),
+                                     mLoanFrequency.getApiModel());
+    if (mStartDate != null) {
+      loanInfo.mStartedTime = mStartDate.getTime();
+
+      // Balance
+      calculateBalance();
+      if (mBalance != null) {
+        loanInfo.mBalance = mBalance.doubleValue();
+      }
+
+      // Payments
+      for (LoanPayment lp : mLoanPayments) {
+        loanInfo.mPayments.add(lp.getApiModel());
+      }
+
+      // Next Payment
+      if (mNextPayment != null) {
+        loanInfo.mNextPayment = mNextPayment.getApiModel();
+      }
+    }
+
+    return loanInfo;
+  }
+
+  /**
    * Returns the API summary model relating to the database model
    * @return the API summary for a loan
    */
@@ -198,6 +234,39 @@ public class Loan extends AbstractObject {
       }
     }
     return loanSummary;
+  }
+
+  /**
+   * Fetches the loan information from the database
+   * @param borrower the borrower object to fetch for
+   * @param reference the reference UUID to the loan
+   * @return the loan object with the information fetched. If not found, return NULL
+   */
+  public Loan getLoan(Borrower borrower, String reference) {
+    // Build the query
+    SelectBuilder selectBuilder = buildSelectSql(borrower, reference);
+    BankConnection.join(selectBuilder, getColumn(BANK));
+    LoanAmortization.join(selectBuilder, getColumn(AMORTIZATION));
+    LoanFrequency.join(selectBuilder, getColumn(FREQUENCY));
+    String selectSql = selectBuilder.toString();
+
+    // Try to execute against the connection
+    try (Connection conn = SQLManager.getConnection()) {
+      try (ResultSet rs = conn.prepareStatement(selectSql).executeQuery()) {
+        if (rs.next()) {
+          updateFromFetch(rs);
+          mBankConnection = new BankConnection(rs);
+          mLoanAmortization = new LoanAmortization(rs);
+          mLoanFrequency = new LoanFrequency(rs);
+          fetchAllPayments(conn);
+          return this;
+        }
+      }
+    } catch (SQLException e) {
+      throw new RuntimeException("Unable to fetch the loan reference with SQL", e);
+    }
+
+    return null;
   }
 
   /*

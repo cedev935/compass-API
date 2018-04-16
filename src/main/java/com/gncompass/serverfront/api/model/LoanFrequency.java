@@ -21,6 +21,10 @@ public class LoanFrequency extends AbstractModel {
   public LoanFrequency() {
   }
 
+  public LoanFrequency(JsonObject jsonObject) {
+    parse(jsonObject);
+  }
+
   public LoanFrequency(long id, String name, int days, int perMonth) {
     mId = id;
     mName = name;
@@ -51,7 +55,10 @@ public class LoanFrequency extends AbstractModel {
 
   @Override
   public void parse(HttpServletRequest request) {
-    JsonObject jsonObject = getContent(request);
+    parse(getContent(request));
+  }
+
+  private void parse(JsonObject jsonObject) {
     if(jsonObject != null) {
       mId = getLongFromJson(jsonObject, KEY_ID, 0L);
       mName = jsonObject.getString(KEY_NAME, null);
