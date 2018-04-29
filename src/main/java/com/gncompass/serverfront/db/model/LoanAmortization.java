@@ -2,6 +2,7 @@ package com.gncompass.serverfront.db.model;
 
 import com.gncompass.serverfront.db.SelectBuilder;
 import com.gncompass.serverfront.db.SQLManager;
+import com.gncompass.serverfront.util.PaymentHelper;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -93,6 +94,32 @@ public class LoanAmortization extends AbstractObject {
     return new com.gncompass.serverfront.api.model.LoanAmortization(mId, mName, mMonths);
   }
 
+  /**
+   * Fetches the loan amortization information from the database based on the ID
+   * @param amortizationId the unique amortization ID
+   * @return the loan amortization object with the information fetched. If not found, return NULL
+   */
+  public LoanAmortization getForId(int amortizationId) {
+    // Build the query
+    String selectSql = buildSelectSql()
+        .where(getColumn(ID) + "=" + Integer.toString(amortizationId))
+        .toString();
+
+    // Try to execute against the connection
+    try (Connection conn = SQLManager.getConnection()) {
+      try (ResultSet rs = conn.prepareStatement(selectSql).executeQuery()) {
+        if (rs.next()) {
+          updateFromFetch(rs);
+          return this;
+        }
+      }
+    } catch (SQLException e) {
+      throw new RuntimeException("Unable to fetch the loan amortization reference with SQL", e);
+    }
+
+    return null;
+  }
+
   /*
    * Returns the table name of the class
    * @return the object table name
@@ -100,6 +127,18 @@ public class LoanAmortization extends AbstractObject {
   @Override
   public String getTable() {
     return TABLE_NAME;
+  }
+
+  /**
+   * Returns the total number of years that the loan will last for. This can be partial values such
+   * as 0.5 for a 6 month period
+   * @return the total number of years. E.g. 1 for a 12 month, 0.5 for a 6 month amortization
+   */
+  public double getTotalYears() {
+    if (mMonths > 0) {
+      return (double) mMonths / PaymentHelper.MONTHS_PER_YEAR;
+    }
+    return 0;
   }
 
   /*=============================================================

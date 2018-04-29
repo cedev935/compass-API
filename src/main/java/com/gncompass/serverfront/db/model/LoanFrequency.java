@@ -2,11 +2,14 @@ package com.gncompass.serverfront.db.model;
 
 import com.gncompass.serverfront.db.SelectBuilder;
 import com.gncompass.serverfront.db.SQLManager;
+import com.gncompass.serverfront.util.PaymentHelper;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.GregorianCalendar;
 import java.util.List;
 
 public class LoanFrequency extends AbstractObject {
@@ -95,6 +98,77 @@ public class LoanFrequency extends AbstractObject {
    */
   public com.gncompass.serverfront.api.model.LoanFrequency getApiModel() {
     return new com.gncompass.serverfront.api.model.LoanFrequency(mId, mName, mDays, mPerMonth);
+  }
+
+  /**
+   * Fetches the loan frequency information from the database based on the ID
+   * @param frequencyId the unique frequency ID
+   * @return the loan frequency object with the information fetched. If not found, return NULL
+   */
+  public LoanFrequency getForId(int frequencyId) {
+    // Build the query
+    String selectSql = buildSelectSql()
+        .where(getColumn(ID) + "=" + Integer.toString(frequencyId))
+        .toString();
+
+    // Try to execute against the connection
+    try (Connection conn = SQLManager.getConnection()) {
+      try (ResultSet rs = conn.prepareStatement(selectSql).executeQuery()) {
+        if (rs.next()) {
+          updateFromFetch(rs);
+          return this;
+        }
+      }
+    } catch (SQLException e) {
+      throw new RuntimeException("Unable to fetch the loan frequency reference with SQL", e);
+    }
+
+    return null;
+  }
+
+  /**
+   * Returns the next payment date based on the start date plus the number of payment periods
+   * that have already elapsed or have been processed
+   * @param startDate the start date of the loan payments
+   * @param periodsElapsed the number of payment periods that have been already identified
+   * @return the next payment date
+   */
+  public Date getNextPaymentDate(Date startDate, int periodsElapsed) {
+    GregorianCalendar startCalendar = new GregorianCalendar();
+    startCalendar.setTime(startDate);
+
+    // Handle the result depending on what kind of frequency it is
+    if (mDays > 0) {
+      startCalendar.add(GregorianCalendar.DAY_OF_MONTH, (periodsElapsed + 1) * mDays);
+    } else if (mPerMonth > 0) {
+      startCalendar.add(GregorianCalendar.MONTH, (int) ((float) (periodsElapsed + 1) / mPerMonth));
+      if (mPerMonth > 0) {
+        if (mPerMonth == 2) {
+          // Every other month payment period adds a 14 day offset
+          if (periodsElapsed % 2 == 0) {
+            startCalendar.add(GregorianCalendar.DAY_OF_MONTH, 14);
+          }
+        } else {
+          throw new RuntimeException(
+                          "Per month frequencies larger than 2 (semi-monthly) are not supported");
+        }
+      }
+    }
+
+    return new Date(startCalendar.getTimeInMillis());
+  }
+
+  /**
+   * Returns the number of periods per year for the frequency
+   * @return period count
+   */
+  public int getPeriodsPerYear() {
+    if (mDays > 0) {
+      return PaymentHelper.DAYS_PER_YEAR / mDays;
+    } else if (mPerMonth > 0) {
+      return PaymentHelper.MONTHS_PER_YEAR * mPerMonth;
+    }
+    return 0;
   }
 
   /*

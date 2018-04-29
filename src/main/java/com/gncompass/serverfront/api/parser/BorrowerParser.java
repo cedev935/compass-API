@@ -15,6 +15,7 @@ import com.gncompass.serverfront.api.executer.borrower.BorrowerInfo;
 import com.gncompass.serverfront.api.executer.borrower.BorrowerLogin;
 import com.gncompass.serverfront.api.executer.borrower.BorrowerLogout;
 import com.gncompass.serverfront.api.executer.borrower.BorrowerUpdate;
+import com.gncompass.serverfront.api.executer.borrower.LoanCreate;
 import com.gncompass.serverfront.api.executer.borrower.LoanInfo;
 import com.gncompass.serverfront.api.executer.borrower.LoanList;
 import com.gncompass.serverfront.util.HttpHelper.RequestType;
@@ -235,7 +236,7 @@ public abstract class BorrowerParser {
       if (type == RequestType.GET) {
         executer = new LoanList(borrowerUuid);
       } else if (type == RequestType.POST) {
-        //executer = new LoanCreate(borrowerUuid);
+        executer = new LoanCreate(borrowerUuid);
       }
     } else {
       nextLevel = true;

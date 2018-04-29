@@ -1,8 +1,10 @@
 package com.gncompass.serverfront.db.model;
 
+import com.gncompass.serverfront.db.InsertBuilder;
 import com.gncompass.serverfront.db.SelectBuilder;
 import com.gncompass.serverfront.util.Currency;
 
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -54,6 +56,26 @@ public abstract class TransactionDetail extends AbstractObject {
   /*=============================================================
    * PROTECTED FUNCTIONS
    *============================================================*/
+
+  /**
+   * Adds the transaction detail to the database
+   * @param conn the SQL connection
+   * @return TRUE if successfully added. FALSE otherwise
+   * @throws SQLException exception on insert
+   */
+  protected boolean addToDatabase(Connection conn) throws SQLException {
+    if (mAmount != null) {
+      // Create the transaction detail insert statement
+      String insertSql = new InsertBuilder(getTableParent())
+          .set(TYPE, Integer.toString(getTransactionType().getValue()))
+          .set(AMOUNT, Double.toString(mAmount.doubleValue()))
+          .toString();
+
+      // Execute the insert
+      return (conn.prepareStatement(insertSql).executeUpdate() == 1);
+    }
+    return false;
+  }
 
   /**
    * Build the select SQL for all properties related to the transaction detail

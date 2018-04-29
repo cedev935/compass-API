@@ -1,6 +1,8 @@
 package com.gncompass.serverfront.db.model;
 
+import com.gncompass.serverfront.db.InsertBuilder;
 import com.gncompass.serverfront.db.SelectBuilder;
+import com.gncompass.serverfront.db.SQLManager;
 import com.gncompass.serverfront.util.Currency;
 
 import java.sql.Connection;
@@ -9,6 +11,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class LoanPayment extends TransactionDetail {
   // Database name
@@ -124,6 +127,53 @@ public class LoanPayment extends TransactionDetail {
   /*=============================================================
    * PUBLIC FUNCTIONS
    *============================================================*/
+
+  /**
+   * Adds this loan payment for the provided loan to the database
+   * @param loan the loan to tie the payment to
+   * @return TRUE if the loan payment was successfully added. FALSE otherwise
+   */
+  public boolean addToLoan(Loan loan) {
+    if (mInterest != null && mDueDate != null) {
+      // Create the loan payment insert statement (done before it is needed to prevent holding
+      // the connection for longer than needed)
+      String insertSql = new InsertBuilder(getTable())
+          .set(ID, "LAST_INSERT_ID()")
+          .set(LOAN, Long.toString(loan.mId))
+          .set(INTEREST, Double.toString(mInterest.doubleValue()))
+          .set(DUE_DATE, "FROM_UNIXTIME(" + TimeUnit.MILLISECONDS.toSeconds(mDueDate.getTime()) + ")")
+          .toString();
+
+      // Try to fetch a connection
+      try (Connection conn = SQLManager.getConnection()) {
+        boolean success = false;
+        conn.setAutoCommit(false);
+
+        try {
+          // Insert the transaction detail (parent) first
+          if (super.addToDatabase(conn)) {
+            // Insert the connected loan payment portion
+            if (conn.prepareStatement(insertSql).executeUpdate() == 1) {
+              success = true;
+            }
+          }
+        } catch (SQLException e) {
+          throw new RuntimeException("Unable to add the new loan payment for the loan", e);
+        }
+
+        // Depending on the result, either commit or rollback
+        if (success) {
+          conn.commit();
+          return true;
+        } else {
+          conn.rollback();
+        }
+      } catch (SQLException e) {
+        throw new RuntimeException("Unable to transact the new loan payment for the loan", e);
+      }
+    }
+    return false;
+  }
 
   /**
    * Returns the API model relating to the database model

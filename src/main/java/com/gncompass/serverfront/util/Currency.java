@@ -17,6 +17,10 @@ public class Currency {
     parse(value);
   }
 
+  public Currency(Currency value) {
+    this.cents = value.cents;
+  }
+
   private Currency(long cents) {
     this.cents = cents;
   }
@@ -51,6 +55,14 @@ public class Currency {
 
   public float floatValue() {
     return new Long(cents).floatValue() / CENTS_FACTOR;
+  }
+
+  public boolean greaterThan(Currency currency) {
+    return cents > currency.cents;
+  }
+
+  public boolean lessThan(Currency currency) {
+    return cents < currency.cents;
   }
 
   public boolean lessThanZero() {

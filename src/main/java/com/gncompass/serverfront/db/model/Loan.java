@@ -2,9 +2,11 @@ package com.gncompass.serverfront.db.model;
 
 import com.gncompass.serverfront.api.model.LoanInfo;
 import com.gncompass.serverfront.api.model.LoanSummary;
+import com.gncompass.serverfront.db.InsertBuilder;
 import com.gncompass.serverfront.db.SelectBuilder;
 import com.gncompass.serverfront.db.SQLManager;
 import com.gncompass.serverfront.util.Currency;
+import com.gncompass.serverfront.util.PaymentHelper;
 import com.gncompass.serverfront.util.UuidHelper;
 
 import java.sql.Connection;
@@ -62,6 +64,14 @@ public class Loan extends AbstractObject {
 
   public Loan(ResultSet rs) throws SQLException {
     updateFromFetch(rs);
+  }
+
+  public Loan(Currency principal, int ratingId, double rate) {
+    mPrincipal = principal;
+    mRatingId = ratingId;
+    mRate = rate;
+
+    mReferenceUuid = UUID.randomUUID();
   }
 
   /*=============================================================
@@ -179,6 +189,102 @@ public class Loan extends AbstractObject {
   /*=============================================================
    * PUBLIC FUNCTIONS
    *============================================================*/
+
+  /**
+   * Adds this loan for the provided borrower to the database
+   * @param borrower the borrower to tie this loan to
+   * @return TRUE if successfully added. FALSE otherwise
+   */
+  public boolean addForBorrower(Borrower borrower) {
+    if (mReferenceUuid != null && borrower != null && mBankConnection != null && mPrincipal != null
+        && mRate > 0.0d && mLoanAmortization != null && mLoanFrequency != null) {
+      // Create the loan insert statement
+      // This also defines the start date before being fulfilled (TEMP)
+      String insertSql = new InsertBuilder(getTable())
+          .set(REFERENCE, UuidHelper.getHexFromUUID(mReferenceUuid, true))
+          .set(BORROWER, Long.toString(borrower.mId))
+          .set(BANK, Long.toString(mBankConnection.mId))
+          .set(PRINCIPAL, Double.toString(mPrincipal.doubleValue()))
+          .set(RATING, Integer.toString(mRatingId))
+          .set(RATE, Double.toString(mRate))
+          .set(AMORTIZATION, Long.toString(mLoanAmortization.mId))
+          .set(FREQUENCY, Long.toString(mLoanFrequency.mId))
+          .set(START_DATE, "CURDATE()")
+          .toString();
+
+      // Attempt the insert against a connection
+      try (Connection conn = SQLManager.getConnection()) {
+        if (conn.prepareStatement(insertSql).executeUpdate() == 1) {
+          mStartDate = new Date(new java.util.Date().getTime()); // TEMP
+          mCreated = new Timestamp(mStartDate.getTime());
+
+          // TEMP. Only required due to special MVP additions (see LoanCreate functionality)
+          try (ResultSet rs = conn.prepareStatement("SELECT LAST_INSERT_ID()").executeQuery()) {
+            if (rs.next()) {
+              mId = rs.getLong(1);
+              return true;
+            }
+          }
+        }
+      } catch (SQLException e) {
+        throw new RuntimeException("Unable to create a new loan with SQL", e);
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Generates the next payment for the loan based on the loan properties and the previous payment
+   * information available
+   * @return TRUE if successful. FALSE otherwise
+   */
+  public boolean generateNextPayment() {
+    // Determine the payment per period
+    double totalYears = mLoanAmortization.getTotalYears();
+    int periodsPerYear = mLoanFrequency.getPeriodsPerYear();
+    double dailyInterestRate = mRate / PaymentHelper.DAYS_PER_YEAR;
+    double ratePerPeriod = Math.pow(1 + dailyInterestRate,
+                                    (double) PaymentHelper.DAYS_PER_YEAR / periodsPerYear) - 1;
+    Currency paymentPerPeriod = PaymentHelper.paymentPerPeriod(
+                                mPrincipal, ratePerPeriod, (int) (periodsPerYear * totalYears));
+
+    // Calculate the total principal payments already active to determine a pending balance
+    Date lastPaymentDate = mStartDate;
+    Currency principalBalance = new Currency(mPrincipal);
+    if (mLoanPayments != null) {
+      for (LoanPayment lp : mLoanPayments) {
+        principalBalance = principalBalance.subtract(lp.getPrincipal());
+        lastPaymentDate = lp.mDueDate;
+      }
+    }
+
+    // Determine the next date for a payment based on the previous payment
+    Date nextPaymentDate = mLoanFrequency.getNextPaymentDate(
+                                    mStartDate, mLoanPayments != null ? mLoanPayments.size() : 0);
+
+    // With the current balance, determine what the next interest payment should be for
+    long daysInPeriod = PaymentHelper.daysInPeriod(lastPaymentDate, nextPaymentDate);
+    Currency interestAmount = new Currency(
+                                daysInPeriod * dailyInterestRate * principalBalance.doubleValue());
+
+    // With the balance, determine what the next payment should be for
+    Currency interestWithPrincipal = principalBalance.add(interestAmount);
+    Currency paymentAmount = null;
+    if (interestWithPrincipal.lessThan(paymentPerPeriod)) {
+      paymentAmount = interestWithPrincipal;
+    } else {
+      paymentAmount = paymentPerPeriod;
+    }
+
+    // Generate the payment
+    LoanPayment payment = new LoanPayment(paymentAmount, interestAmount, nextPaymentDate);
+    if (mLoanPayments == null) {
+      mLoanPayments = new ArrayList<>();
+    }
+    mLoanPayments.add(payment);
+    return payment.addToLoan(this);
+  }
 
   /**
    * Returns the API info model relating to the database model
