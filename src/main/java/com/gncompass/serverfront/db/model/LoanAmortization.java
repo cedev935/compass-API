@@ -170,6 +170,31 @@ public class LoanAmortization extends AbstractObject {
   }
 
   /**
+   * Fetches all loan amortizations available for creating loans (in the API model form)
+   * @return the stack of loan amortizations available as API model. Empty list if none found
+   */
+  public static List<com.gncompass.serverfront.api.model.LoanAmortization> getAllAsModel() {
+    List<com.gncompass.serverfront.api.model.LoanAmortization> loanAmortizations
+        = new ArrayList<>();
+
+    // Build the query
+    String selectSql = new LoanAmortization().buildSelectSql().toString();
+
+    // Try to execute against the connection
+    try (Connection conn = SQLManager.getConnection()) {
+      try (ResultSet rs = conn.prepareStatement(selectSql).executeQuery()) {
+        while (rs.next()) {
+          loanAmortizations.add(new LoanAmortization(rs).getApiModel());
+        }
+      }
+    } catch (SQLException e) {
+      throw new RuntimeException("Unable to fetch all the loan amortization models with SQL", e);
+    }
+
+    return loanAmortizations;
+  }
+
+  /**
    * Adds a join statement to the select builder provided connecting the amortization table to
    * the caller
    * @param selectBuilder the select builder to add the join information to

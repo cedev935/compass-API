@@ -209,6 +209,30 @@ public class LoanFrequency extends AbstractObject {
   }
 
   /**
+   * Fetches all loan frequencies available for creating loans (in the API model form)
+   * @return the stack of loan frequencies available as API model. Empty list if none found
+   */
+  public static List<com.gncompass.serverfront.api.model.LoanFrequency> getAllAsModel() {
+    List<com.gncompass.serverfront.api.model.LoanFrequency> loanFrequencies = new ArrayList<>();
+
+    // Build the query
+    String selectSql = new LoanFrequency().buildSelectSql().toString();
+
+    // Try to execute against the connection
+    try (Connection conn = SQLManager.getConnection()) {
+      try (ResultSet rs = conn.prepareStatement(selectSql).executeQuery()) {
+        while (rs.next()) {
+          loanFrequencies.add(new LoanFrequency(rs).getApiModel());
+        }
+      }
+    } catch (SQLException e) {
+      throw new RuntimeException("Unable to fetch all the loan frequency models with SQL", e);
+    }
+
+    return loanFrequencies;
+  }
+
+  /**
    * Adds a join statement to the select builder provided connecting the frequency table to
    * the caller
    * @param selectBuilder the select builder to add the join information to

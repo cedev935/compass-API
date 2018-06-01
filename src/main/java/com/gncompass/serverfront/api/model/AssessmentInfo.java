@@ -37,6 +37,10 @@ public class AssessmentInfo extends AbstractModel {
   public AssessmentInfo() {
   }
 
+  public AssessmentInfo(JsonObject jsonObject) {
+    parse(jsonObject);
+  }
+
   public AssessmentInfo(long registeredTime, long updatedTime, int statusId,
                         int ratingId, String uploadPath) {
     this(null, registeredTime, updatedTime, statusId, ratingId, uploadPath);
@@ -101,7 +105,10 @@ public class AssessmentInfo extends AbstractModel {
 
   @Override
   public void parse(HttpServletRequest request) {
-    JsonObject jsonObject = getContent(request);
+    parse(getContent(request));
+  }
+
+  private void parse(JsonObject jsonObject) {
     if(jsonObject != null) {
       mReference = jsonObject.getString(KEY_REFERENCE, null);
       mRegisteredTime = getLongFromJson(jsonObject, KEY_REGISTERED, 0L);

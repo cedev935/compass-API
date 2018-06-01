@@ -15,6 +15,7 @@ import com.gncompass.serverfront.api.executer.borrower.BorrowerInfo;
 import com.gncompass.serverfront.api.executer.borrower.BorrowerLogin;
 import com.gncompass.serverfront.api.executer.borrower.BorrowerLogout;
 import com.gncompass.serverfront.api.executer.borrower.BorrowerUpdate;
+import com.gncompass.serverfront.api.executer.borrower.LoanAvailable;
 import com.gncompass.serverfront.api.executer.borrower.LoanCreate;
 import com.gncompass.serverfront.api.executer.borrower.LoanInfo;
 import com.gncompass.serverfront.api.executer.borrower.LoanList;
@@ -30,6 +31,7 @@ import javax.servlet.ServletException;
 public abstract class BorrowerParser {
   private static final String PATH_APPROVED = "approved";
   private static final String PATH_ASSESSMENTS = "assessments";
+  private static final String PATH_AVAILABLE = "available";
   private static final String PATH_BANKS = "banks";
   private static final String PATH_LOANS = "loans";
   private static final String PATH_LOGIN = "login";
@@ -249,7 +251,12 @@ public abstract class BorrowerParser {
       loanUuid = pathChunks.remove(0);
 
       if (pathChunks.size() == 0) {
-        if (type == RequestType.GET) {
+        if (loanUuid.equals(PATH_AVAILABLE)) {
+          if (type == RequestType.GET) {
+            executer = new LoanAvailable(borrowerUuid);
+          }
+        }
+        else if (type == RequestType.GET) {
           executer = new LoanInfo(borrowerUuid, loanUuid);
         }
       }
