@@ -142,7 +142,7 @@ public class LoanFrequency extends AbstractObject {
       startCalendar.add(GregorianCalendar.DAY_OF_MONTH, (periodsElapsed + 1) * mDays);
     } else if (mPerMonth > 0) {
       startCalendar.add(GregorianCalendar.MONTH, (int) ((float) (periodsElapsed + 1) / mPerMonth));
-      if (mPerMonth > 0) {
+      if (mPerMonth > 1) {
         if (mPerMonth == 2) {
           // Every other month payment period adds a 14 day offset
           if (periodsElapsed % 2 == 0) {
