@@ -1,10 +1,15 @@
-appengine-skeleton
+Compass Backend API
 ==================
 
-This is a generated application from the appengine-skeleton archetype.
+Compass is a peer-to-peer loan platform that brings ease of use and improvements
+to an industry that has been largely untouched by automation.
 
-See the [Google App Engine standard environment documentation][ae-docs] for more
-detailed instructions.
+This is the backend REST API application built in Java 8 EE for rollout on the
+Google Cloud platform. It uses MySQL for data persistance and Storage on GCP
+for large file storage
+
+See the [Google App Engine standard environment documentation][ae-docs] for
+detailed configuration instructions.
 
 [ae-docs]: https://cloud.google.com/appengine/docs/java/
 
@@ -26,30 +31,3 @@ detailed instructions.
 ### Deploying
 
     mvn appengine:deploy
-
-## Testing
-
-    mvn verify
-
-As you add / modify the source code (`src/main/java/...`) it's very useful to add
-[unit testing](https://cloud.google.com/appengine/docs/java/tools/localunittesting)
-to (`src/main/test/...`).  The following resources are quite useful:
-
-* [Junit4](http://junit.org/junit4/)
-* [Mockito](http://mockito.org/)
-* [Truth](http://google.github.io/truth/)
-
-## Updating to latest Artifacts
-
-An easy way to keep your projects up to date is to use the maven [Versions plugin][versions-plugin].
-
-    mvn versions:display-plugin-updates
-    mvn versions:display-dependency-updates
-    mvn versions:use-latest-versions
-
-Note - Be careful when changing `javax.servlet` as App Engine Standard uses 3.1 for Java 8, and 2.5
-for Java 7.
-
-Our usual process is to test, update the versions, then test again before committing back.
-
-[plugin]: http://www.mojohaus.org/versions-maven-plugin/
